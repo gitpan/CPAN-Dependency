@@ -4,13 +4,13 @@ use Carp;
 use CPANPLUS::Backend;
 use File::Spec;
 use File::Slurp;
-use Module::Depends;
+use YAML qw(LoadFile DumpFile);
 require Exporter;
 
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.02';
+  $VERSION = '0.03';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -91,7 +91,7 @@ Create a new C<CPAN::Dependency> object with verbose mode enabled
 and adds three "big" modules to the process list:
 
     my $cpandeps = new CPAN::Dependency verbose => 1, 
-            process => [qw(WWW::Mechanize Maypole Template)]
+            process => [qw(WWW::Mechanize Maypole Template CPAN::Search::Lite)]
 
 Create a new C<CPAN::Dependency> object with verbose mode enabled 
 and adds all the distributions from the CPAN to the process list: 
@@ -224,30 +224,38 @@ sub run {
         my $dist_name = $dist->package_name;
         
         $self->_vprint($name);
-        $self->_vprint("  >> ${YELLOW}skip$RESET\n") and
+        $self->_vprint("  >> ${YELLOW}skip: already processed$RESET\n") and
           next if not defined $dist or $self->{skip}{$dist_name}++;
+        
+        $self->_vprint("  >> ${YELLOW}skip: is a bundle$RESET\n") and
+          next if $dist->is_bundle;
         
         $self->_vprintf(" => $BOLD%s$RESET %s by %s (%s)\n", $dist_name, 
           $dist->package_version, $dist->author->cpanid, $dist->author->author);
         
         $archive = $where = '';
         
-        # fetch and extract the module
+        # fetch and extract the distribution
         eval {
             $archive = $dist->fetch(force => 1) or next;
             $where   = $dist->extract(force => 1) or next;
         };
         $self->_vprint("  >> $BOLD${RED}CPANPLUS error: $@$RESET\n") and next if $@;
 
-        # read its dependencies
+        # find its dependencies (that's the harder part)
         my $deps = undef;
-        eval {
-            $deps = Module::Depends->new->dist_dir($where)->find_modules || {};
-            $deps = $deps->{requires} || {};
-        };
         
-        # if it didn't work, try with parsing method
-        if($@) {
+        # if there's a META.yml, we've won
+        if(-f File::Spec->catfile($where, 'META.yml')) {
+            eval {
+                $deps = LoadFile(File::Spec->catfile($where, 'META.yml'));
+                $deps = $deps->{requires};
+            };
+            $self->_vprint("  >> $BOLD${RED}YAML error: $@$RESET\n") if $@;
+            
+        
+        # if not, we must try harder
+        } else {
             $self->_vprint("  >> $BOLD${YELLOW}no META.yml; using parsing method$RESET\n");
 
             # distribution uses Makefile.PL
@@ -315,6 +323,18 @@ sub run {
     }
 
     $self->_vprint("${BOLD}END PROCESSING$RESET\n");
+}
+
+
+=item calculate_score()
+
+Calculate the score of each distribution by walking throught the 
+dependency tree. 
+
+=cut
+
+sub calculate_score {
+    my $self = shift;
     
     # now walk throught the prereqs tree
     for my $dist (keys %{$self->{prereqs}}) {
@@ -334,6 +354,66 @@ sub deps_by_dists {
     return $_[0]->{prereqs}
 }
 
+=item save_deps_tree()
+
+Saves the dependency tree of the object to a YAML stream. 
+Expect one of the following options. 
+
+B<Options>
+
+=over 4
+
+=item *
+
+C<file> - saves to the given YAML file.
+
+=back
+
+B<Examples>
+
+    $cpandep->save_deps_tree(file => 'deps.yml');
+
+=cut
+
+sub save_deps_tree {
+    my $self = shift;
+    carp "error: Function save_deps_tree() expected arguments" and return unless @_;
+    my %args = @_;
+    if(exists $args{file}) {
+        unlink($args{file}) if -f $args{file};
+        DumpFile($args{file}, $self->{prereqs});
+    }
+}
+
+=item load_deps_tree()
+
+Loads a YAML stream that contains a dependency tree into the current object. 
+Expect one of the following options. 
+
+B<Options>
+
+=over 4
+
+=item *
+
+C<file> - loads from the given YAML file.
+
+=back
+
+B<Examples>
+
+    $cpandep->load_deps_tree(file => 'deps.yml');
+
+=cut
+
+sub load_deps_tree {
+    my $self = shift;
+    carp "error: Function load_deps_tree() expected arguments" and return unless @_;
+    my %args = @_;
+    if(exists $args{file}) {
+        $self->{prereqs} = LoadFile($args{file});
+    }
+}
 
 =item score_by_dists()
 
@@ -357,6 +437,7 @@ sub score_by_dists {
 =item _tree_walk()
 
 Walks throught the dependency tree and updates the score of each distribution. 
+See L<"SCORE CALCULATION">.
 
 =cut
 
@@ -366,16 +447,24 @@ sub _tree_walk {
     my $depth = shift;
     my $meta = $self->{prereqs}{$dist};
 
+    # avoid cycle dependencies
+    return if $meta->{has_seen};
+    local $meta->{has_seen} = 1;
+    
+    #print '>'x$depth, " $dist => @{[keys %{$meta->{prereqs}}]}\n";
     for my $reqdist (keys %{ $meta->{prereqs} }) {
         # are $dist and $reqdist from the same author?
-        my $same_author = $meta->{prereqs}{$reqdist} ;
+        my $same_author = $meta->{prereqs}{$reqdist};
         
         # increase the score of the dist this one depends upon
         $self->{prereqs}{$reqdist}{score} += $depth * $same_author
         ;#  if exists $self->{prereqs}{$reqdist};
         
+        # recurse
         $self->_tree_walk($reqdist, $depth + $same_author);
     }
+
+    delete $meta->{has_seen};
 }
 
 =item _vprint()
@@ -418,9 +507,9 @@ Defaults to yes (1).
 
 sub color {
     my $self = shift;
-    my $old = $self->{option}{color};
+    my $old = $self->{options}{color};
     if(defined $_[0]) {
-        $self->{option}{color} = $_[0];
+        $self->{options}{color} = $_[0];
         ($RESET , $BOLD  , $RED    , $GREEN  , $YELLOW) = 
           $self->{option}{color} ? 
             ("\e[0m", "\e[1m", "\e[31m", "\e[32m", "\e[33m") : 
@@ -437,9 +526,9 @@ Set debug level. Defaults to 0.
 
 sub debug {
     my $self = shift;
-    my $old = $self->{option}{debug};
+    my $old = $self->{options}{debug};
     if(defined $_[0]) {
-        $self->{option}{debug} = $_[0];
+        $self->{options}{debug} = $_[0];
         $self->{backend}->configure_object->set_conf(verbose => $_[0]);
     }
     return $old
@@ -454,10 +543,10 @@ there is the choice (i.e. use B<tar(1)> instead of C<Archive::Tar>).
 
 sub prefer_bin {
     my $self = shift;
-    my $old = $self->{option}{prefer_bin};
+    my $old = $self->{options}{prefer_bin};
     if(defined $_[0]) {
-        $self->{option}{prefer_bin} = $_[0];
-        $self->{backend}->configure_object->set_conf(perfer_bin => $_[0]);
+        $self->{options}{prefer_bin} = $_[0];
+        $self->{backend}->configure_object->set_conf(prefer_bin => $_[0]);
     }
     return $old
 }
@@ -482,16 +571,16 @@ for each distribution I<D>
 
 =item 2
 
-S<    >for each prerequisite I<P> of this distribution
+C<    >for each prerequisite I<P> of this distribution
 
 =item 3
 
-S<        >if both I<D> and I<P> are not made by the same auhor, 
+C<        >if both I<D> and I<P> are not made by the same auhor, 
 update the score of I<P> by adding it the current dependency depth
 
 =item 4
 
-S<        >recurse step 1 using I<P>
+C<        >recurse step 1 using I<P>
 
 =back
 

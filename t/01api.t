@@ -1,6 +1,6 @@
 use strict;
 use Test;
-BEGIN { plan tests => 29 }
+BEGIN { plan tests => 31 }
 use CPAN::Dependency;
 
 # check that the following functions are available
@@ -8,6 +8,7 @@ ok( defined \&CPAN::Dependency::new                       );
 ok( defined \&CPAN::Dependency::process                   );
 ok( defined \&CPAN::Dependency::skip                      );
 ok( defined \&CPAN::Dependency::run                       );
+ok( defined \&CPAN::Dependency::calculate_score           );
 ok( defined \&CPAN::Dependency::deps_by_dists             );
 ok( defined \&CPAN::Dependency::score_by_dists            );
 ok( defined \&CPAN::Dependency::_tree_walk                );
@@ -30,6 +31,7 @@ ok( ref $cpandep->can('new')                              );
 ok( ref $cpandep->can('process')                          );
 ok( ref $cpandep->can('skip')                             );
 ok( ref $cpandep->can('run')                              );
+ok( ref $cpandep->can('calculate_score')                  );
 ok( ref $cpandep->can('deps_by_dists')                    );
 ok( ref $cpandep->can('score_by_dists')                   );
 ok( ref $cpandep->can('_tree_walk')                       );

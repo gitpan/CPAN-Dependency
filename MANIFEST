@@ -7,11 +7,16 @@ README
 LICENSE
 LICENSE.Artistic
 LICENSE.GPL
-eg/cpandep
+eg/find_deps
+eg/score
+eg/mkreport
+eg/report.html
+eg/style.css
 lib/CPAN/Dependency.pm
 t/00load.t
 t/00prereq.t
 t/01api.t
+t/02internals.t
 t/distchk.t
 t/podcover.t
 t/pod.t

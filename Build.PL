@@ -8,11 +8,12 @@ my $builder = Module::Build->new(
     dist_version_from   => 'lib/CPAN/Dependency.pm',
     #script_files        => [ 'bin/cpandep' ], 
     requires => {
-        'CPANPLUS' => '0.050',
+        'CPANPLUS' => '0.051',
         'File::Slurp' => 0,
         'File::Spec' => 0,
-        'Module::Depends' => 0,
+        'Test::Deep' => 0,
         'Test::More' => 0,
+        'YAML' => 0,
     },
     add_to_cleanup      => [ 'CPAN-Dependency-*' ],
 );

@@ -1,5 +1,15 @@
 Revision history for CPAN-Dependency
 
+0.03    2005.01.27
+        Now read META.yml directly instead of using Module::Depends. 
+        Now parsing Makefile.PL or Build.PL when no META.yml is found.
+        Now skip bundles. 
+        Put out the score calculation in a new method calculate_score().
+        Added methods save_deps_tree() and load_deps_tree().
+        Splitted eg/cpandep into eg/find_deps and eg/score
+        Added eg/mkreport, eg/report.html and eg/style.css
+        Added t/02internals.t
+
 0.02    2005.01.23
         Now avoid some cases where CPANPLUS could make CPAN::Dependency die. 
         Added t/01api.t

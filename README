@@ -5,6 +5,8 @@ DESCRIPTION
 
     This module can process a set of distributions, up to the whole CPAN, 
     and extract the dependency relations between these distributions. 
+    It also calculates a score for each distribution based on the number 
+    of times it appears in the prerequisites of other distributions. 
 
 
 INSTALLATION
