@@ -1,7 +1,7 @@
 use strict;
 use Test::More;
 use Test::Deep;
-BEGIN { plan tests => 48 }
+BEGIN { plan tests => 53 }
 use CPAN::Dependency;
 
 # create an object
@@ -18,7 +18,7 @@ ok( $cpandep->{backend}->isa('CPANPLUS::Backend') , "backend object is of expect
 is( ref $cpandep->{backend}, 'CPANPLUS::Backend'  , "backend object is of expected ref"  );
 
 # check binary options
-for my $option (qw(color debug prefer_bin verbose)) {
+for my $option (qw(clean_build_dir color debug prefer_bin verbose)) {
     ok( ref $cpandep->can($option)          , "object->can($option)"         );
     $cpandep->$option(1);
     is( $cpandep->{options}{$option}, 1     , "  checking true value"        );
@@ -47,22 +47,22 @@ cmp_deeply( $cpandep->{skip}, \%expected2 , "calling skip() with two args as arr
 # now checking that creating an object by passing options to new()
 # works as expected
 $cpandep = undef;
-eval { $cpandep = new CPAN::Dependency verbose => 0, color => 0, debug => 0, prefer_bin => 0 };
+eval { $cpandep = new CPAN::Dependency verbose => 0, color => 0, debug => 0, prefer_bin => 0, clean_build_dir => 0 };
 is( $@, ''                                  , "object created (with boolean options set to 0)" );
 ok( defined $cpandep                        , "object is defined"            );
 ok( $cpandep->isa('CPAN::Dependency')       , "object is of expected type"   );
 is( ref $cpandep, 'CPAN::Dependency'        , "object is of expected ref"    );
-for my $option (qw(color debug prefer_bin verbose)) {
+for my $option (qw(clean_build_dir color debug prefer_bin verbose)) {
     is( $cpandep->{options}{$option}, 0     , "  checking true value"        );
 }
 
 $cpandep = undef;
-eval { $cpandep = new CPAN::Dependency verbose => 1, color => 1, debug => 1, prefer_bin => 1 };
+eval { $cpandep = new CPAN::Dependency verbose => 1, color => 1, debug => 1, prefer_bin => 1, clean_build_dir => 1 };
 is( $@, ''                                  , "object created (with boolean options set to 1)" );
 ok( defined $cpandep                        , "object is defined"            );
 ok( $cpandep->isa('CPAN::Dependency')       , "object is of expected type"   );
 is( ref $cpandep, 'CPAN::Dependency'        , "object is of expected ref"    );
-for my $option (qw(color debug prefer_bin verbose)) {
+for my $option (qw(clean_build_dir color debug prefer_bin verbose)) {
     is( $cpandep->{options}{$option}, 1     , "  checking true value"        );
 }
 

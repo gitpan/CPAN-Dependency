@@ -15,6 +15,7 @@ WriteMakefile(
         'File::Temp' => 0,
         'Test::Deep' => 0,
         'Test::More' => 0,
+        'Test::Warn' => 0,
         'YAML' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },

@@ -1,5 +1,19 @@
 Revision history for CPAN-Dependency
 
+0.05    2005.01.31
+        Now keeping unknown (non CPAN) dependencies.
+        Now recording by which distributions a dist is used.
+        Added option clean_build_dir to control when deleteting the CPANPLUS build dir.
+        Added t/03errors.t
+        Created a new report with more up-to-date data.
+        Updated Changes (d'oh!)
+
+0.04    2005.01.30
+        Fixed RT#11267 (Adam Kennedy): Cannot create an object with verbose enabled
+        Fixed RT#11269 (Adam Kennedy): Prevent "perl" from appearing as a prereq
+        Added more tests in t/02internals.t
+        Added t/10process.t, t/11skip.t
+
 0.03    2005.01.27
         Now read META.yml directly instead of using Module::Depends. 
         Now parsing Makefile.PL or Build.PL when no META.yml is found.

@@ -2,7 +2,6 @@
 use strict;
 use CPAN::Dependency;
 
-my $cpandep = new CPAN::Dependency process => ALL_CPAN;
-$cpandep->verbose(1);
+my $cpandep = new CPAN::Dependency verbose => 1, clean_build_dir => 1, process => ALL_CPAN;
 $cpandep->run;
 $cpandep->save_deps_tree(file => 'deps.yml');

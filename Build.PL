@@ -14,6 +14,7 @@ my $builder = Module::Build->new(
         'File::Temp' => 0,
         'Test::Deep' => 0,
         'Test::More' => 0,
+        'Test::Warn' => 0,
         'YAML' => 0,
     },
     add_to_cleanup      => [ 'CPAN-Dependency-*' ],

@@ -48,6 +48,7 @@ my %prereqs = (
             'libwww-perl' => 1, 
             'txt2html' => 1, 
         }, 
+        used_by => ignore(), 
         score => 0, 
     }, 
     Maypole => {
@@ -73,12 +74,14 @@ my %prereqs = (
             'URI' => 1, 
             'libwww-perl' => 1, 
         }, 
+        used_by => ignore(), 
         score => 0, 
     }, 
     'Net-Pcap' => {
         author => 'Tim Potter', 
         cpanid => 'TIMPOTTER', 
         prereqs => {}, 
+        used_by => ignore(), 
         score => 0, 
     }, 
     SVK => {
@@ -103,6 +106,7 @@ my %prereqs = (
             'URI' => 1, 
             'YAML' => 1, 
         }, 
+        used_by => ignore(), 
         score => 0, 
     }, 
     'Template-Toolkit' => {
@@ -112,6 +116,7 @@ my %prereqs = (
             'AppConfig' => 0, 
             'PathTools' => 1, 
         }, 
+        used_by => ignore(), 
         score => 0, 
     }, 
     'WWW-Mechanize' => {
@@ -123,6 +128,7 @@ my %prereqs = (
             'Test-Simple' => 1, 
             'URI' => 1, 
         }, 
+        used_by => ignore(), 
         score => 0, 
     }, 
 );

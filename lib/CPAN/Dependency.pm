@@ -2,6 +2,7 @@ package CPAN::Dependency;
 use strict;
 use Carp;
 use CPANPLUS::Backend;
+use Cwd;
 use File::Spec;
 use File::Slurp;
 use YAML qw(LoadFile DumpFile);
@@ -10,7 +11,7 @@ require Exporter;
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.04';
+  $VERSION = '0.05';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -23,10 +24,11 @@ CPAN::Dependency - Analyzes CPAN modules and generates their dependency tree
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =head1 SYNOPSIS
 
+    # find and print the 10 most required CPAN distributions
     use CPAN::Dependency;
 
     my $cpandeps = CPAN::Dependency->new(process => ALL_CPAN);
@@ -45,7 +47,60 @@ This module can process a set of distributions, up to the whole CPAN,
 and extract the dependency relations between these distributions. 
 It also calculates a score for each distribution based on the number 
 of times it appears in the prerequisites of other distributions. 
-The algorithm is descibed in more details in L<"SCORE CALCULATION">. 
+The algorithm is described in more details in L<"SCORE CALCULATION">. 
+
+C<CPAN::Dependency> stores the data in an internal structure which can 
+be saved and loaded using C<save_deps_tree()> and C<load_deps_tree()>. 
+The structure looks like this: 
+
+    DEPS_TREE = {
+        DIST => {
+            author => STRING, 
+            cpanid => STRING, 
+            score  => NUMBER, 
+            prereqs => {
+                DIST => BOOLEAN, 
+                ...
+            }, 
+            used_by => {
+                DIST => BOOLEAN, 
+                ...
+            }, 
+        }, 
+        ....
+    }
+
+With each distribution name I<DIST> are associated the following fields: 
+
+=over 4
+
+=item *
+
+C<author> is a string which contains the name of the author who wrote 
+(or last released) this distribution; 
+
+=item *
+
+C<cpanid> is a string which contains the CPAN ID of the author who wrote 
+(or last released) this distribution;
+
+=item *
+
+C<score> is a number which represents the score of the distribution; 
+
+=item *
+
+C<prereqs> is a hashref which represents the prerequisites of the distribution;
+each key is a prerequisite name and its value is a boolean which is true when 
+the distribution and the prerequisite are not from the same author; 
+
+=item *
+
+C<used_by> is a hashref which represents the distributions which use this 
+particular distribution; each key is a distribution name and its value is a 
+boolean which is true when both distributions are not from the same author; 
+
+=back
 
 =head1 METHODS
 
@@ -69,6 +124,11 @@ C<skip> - adds modules or distributions you don't want to process.
 
 =item *
 
+C<clean_build_dir> - control whether to delete the CPANPLUS directory 
+during the process or not.
+
+=item *
+
 C<color> - use colors (when C<verbose> is also set).
 
 =item *
@@ -87,16 +147,16 @@ C<verbose> - sets the verbose mode.
 
 B<Examples>
 
-Create a new C<CPAN::Dependency> object with verbose mode enabled 
-and adds three "big" modules to the process list:
+Creates a new C<CPAN::Dependency> object with verbose mode enabled 
+and adds a few "big" modules to the process list:
 
     my $cpandeps = new CPAN::Dependency verbose => 1, 
             process => [qw(WWW::Mechanize Maypole Template CPAN::Search::Lite)]
 
-Create a new C<CPAN::Dependency> object with verbose mode enabled 
+Creates a new C<CPAN::Dependency> object with verbose mode enabled 
 and adds all the distributions from the CPAN to the process list: 
 
-    my $cpandeps = new CPAN::Dependency verbose =>1, process => ALL_CPAN;
+    my $cpandeps = new CPAN::Dependency verbose => 1, process => ALL_CPAN;
 
 =cut
 
@@ -104,11 +164,12 @@ sub new {
     my $self = {
         backend     => 0,       # CPANPLUS::Backend object
         
-        options => {            # options
-            color       => 0,   #  - use ANSI colors?
-            debug       => 0,   #  - debug level
-            prefer_bin  => 0,   #  - prefer binaries?
-            verbose     => 0,   #  - verbose?
+        options => {                # options
+            clean_build_dir => 0,   #  - delete CPANPLUS build directory ?
+            color           => 0,   #  - use ANSI colors?
+            debug           => 0,   #  - debug level
+            prefer_bin      => 0,   #  - prefer binaries?
+            verbose         => 0,   #  - verbose?
         }, 
         
         process => [ ],         # modules/distributions to process
@@ -163,7 +224,7 @@ sub new {
 # generate accessors for all existing attributes
 #
 {   no strict 'refs';
-    for my $attr (qw(verbose)) {
+    for my $attr (qw(clean_build_dir verbose)) {
         *{__PACKAGE__.'::'.$attr} = sub {
             my $self = shift;
             my $value = $self->{options}{$attr};
@@ -194,7 +255,7 @@ Add distributions and modules to the process list, passing as an arrayref:
 
 sub process {
     my $self = shift;
-    croak "warning: No argument given to atribute 'process'." and return unless @_;
+    carp "error: No argument given to attribute process()" and return unless @_;
     if($_[0] eq ALL_CPAN) {
         push @{ $self->{process} }, sort keys %{ $self->{backend}->module_tree }
     } else {
@@ -222,7 +283,7 @@ Add distributions and modules to the skip list, passing as an arrayref:
 
 sub skip {
     my $self = shift;
-    croak "warning: No argument given to atribute 'skip'." and return unless @_;
+    carp "error: No argument given to attribute skip()" and return unless @_;
     my @packages = ref $_[0] ? @{$_[0]} : @_;
     for my $package (@packages) {
         my $dist = $self->{backend}->parse_module(module => $package)->package_name;
@@ -326,16 +387,18 @@ sub run {
             
             my $reqdist = eval { $cpan->parse_module(module => $reqmod) };
             $self->_vprint("  >> $BOLD${RED}error: no dist found for $reqmod$RESET\n") 
-              and next unless defined $reqdist;
+              and $deps{$reqmod} = 1 and next unless defined $reqdist;
             
             $self->_vprint("  >> $BOLD${YELLOW}$reqmod is in Perl core$RESET\n") 
               and next if $reqdist->package_is_perl_core;
             
-            $deps{$reqdist->package_name} = $reqdist->author->cpanid ne $dist->author->cpanid ? 1 : 0;
+            $deps{$reqdist->package_name} = 
+                $reqdist->author->cpanid ne $dist->author->cpanid ? 1 : 0;
         }
         
         $self->{prereqs}{$dist_name} = {
             prereqs => { %deps }, 
+            used_by => { }, 
             score => 0, 
             cpanid => $dist->author->cpanid, 
             author => $dist->author->author, 
@@ -345,8 +408,8 @@ sub run {
         # clean up
         eval {
            $cpan->_rmdir(dir => $where) if defined $where and -d $where;
-           $cpan->_rmdir(dir => $self->{build_dir});
-           $cpan->_mkdir(dir => $self->{build_dir});
+           $cpan->_rmdir(dir => $self->{build_dir}) if $self->{options}{clean_build_dir};
+           $cpan->_mkdir(dir => $self->{build_dir}) if $self->{options}{clean_build_dir};
         }
     }
 
@@ -405,7 +468,7 @@ B<Examples>
 
 sub save_deps_tree {
     my $self = shift;
-    carp "error: Function save_deps_tree() expected arguments" and return unless @_;
+    carp "error: No argument given to function save_deps_tree()" and return unless @_;
     my %args = @_;
     if(exists $args{file}) {
         unlink($args{file}) if -f $args{file};
@@ -436,7 +499,7 @@ B<Examples>
 
 sub load_deps_tree {
     my $self = shift;
-    carp "error: Function load_deps_tree() expected arguments" and return unless @_;
+    carp "error: No argument given to function load_deps_tree()" and return unless @_;
     my %args = @_;
     if(exists $args{file}) {
         $self->{prereqs} = LoadFile($args{file});
@@ -485,8 +548,11 @@ sub _tree_walk {
         my $same_author = $meta->{prereqs}{$reqdist};
         
         # increase the score of the dist this one depends upon
-        $self->{prereqs}{$reqdist}{score} += $depth * $same_author
-        ;#  if exists $self->{prereqs}{$reqdist};
+        $self->{prereqs}{$reqdist}{score} += $depth * $same_author;
+        
+        # adds the current dist to the 'used_by' list of its prereq
+        $self->{prereqs}{$reqdist}{used_by}{$dist} = 
+            ($self->{prereqs}{$reqdist}{cpanid}||'') ne $meta->{cpanid} ? 1 : 0;
         
         # recurse
         $self->_tree_walk($reqdist, $depth + $same_author);
@@ -525,6 +591,15 @@ sub _vprintf {
 =head1 OPTIONS
 
 =over 4
+
+=item clean_build_dir()
+
+Control whether to delete the CPANPLUS build directory during the 
+processing of the selected modules or not. 
+This is a quite agreessive method to clean up things, but it's needed 
+when processing the whole CPAN because some distributions are badly 
+made, and some may be just too big for a ramdisk. 
+Default to false (0). 
 
 =item color()
 
@@ -718,10 +793,15 @@ as given for Linux.
 
 B<(F)> C<CPANPLUS::Backend> was unable to create and return a new object. 
 
-=item No argument given to atribute '%s'
+=item No argument given to attribute %s
 
 B<(W)> As the message implies, you didn't supply the expected argument 
 to the attribute. 
+
+=item No argument given to function %s
+
+B<(W)> As the message implies, you didn't supply the expected arguments 
+to the function. 
 
 =item Unknown option '%s': ignoring
 
@@ -741,8 +821,6 @@ L<bug-cpan-dependency@rt.cpan.org>, or through the web interface at
 L<https://rt.cpan.org/NoAuth/ReportBug.html?Queue=CPAN-Dependency>. 
 I will be notified, and then you'll automatically be notified 
 of progress on your bug as I make changes.
-
-=head1 ACKNOWLEDGEMENTS
 
 =head1 COPYRIGHT & LICENSE
 

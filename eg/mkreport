@@ -56,13 +56,16 @@ my $row = <<'ROW';
       >%s</a> [<a href="http://cpan.uwinnipeg.ca/dist/%s"
         title="Read the documentation of this distribution on Kobesearch"
       >mirror</a>]
+      <div class="popup %s"><div><strong>%s</strong> %s</div></div>
     </td>
     <td>%d</td>
 </tr> 
 ROW
 
 for my $dist (@most_popular[0..$num-1]) {
-    printf OUT $row, $dist, $dist, $dist, $deps->{$dist}{score}
+    printf OUT $row, $dist, $dist, $dist, 
+        'used-by', "Used by:", join(', ', sort keys %{$deps->{$dist}{used_by}}), 
+        $deps->{$dist}{score}
 }
 
 print OUT <<'HTML';
@@ -78,7 +81,9 @@ print OUT <<'HTML';
 HTML
 
 for my $dist (@biggest_users[0..$num-1]) {
-    printf OUT $row, $dist, $dist, $dist, scalar keys %{ $deps->{$dist}{prereqs} }
+    printf OUT $row, $dist, $dist, $dist, 
+        'prereqs', "Prerequisites:", join(', ', sort keys %{$deps->{$dist}{prereqs}}), 
+        scalar keys %{ $deps->{$dist}{prereqs} }
 }
 
 my $date = localtime((stat($deps_file))[9]);

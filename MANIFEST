@@ -17,6 +17,7 @@ t/00load.t
 t/00prereq.t
 t/01api.t
 t/02internals.t
+t/03diag.t
 t/10process.t
 t/11skip.t
 t/distchk.t

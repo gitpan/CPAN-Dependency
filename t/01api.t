@@ -1,6 +1,6 @@
 use strict;
 use Test;
-BEGIN { plan tests => 31 }
+BEGIN { plan tests => 33 }
 use CPAN::Dependency;
 
 # check that the following functions are available
@@ -13,6 +13,7 @@ ok( defined \&CPAN::Dependency::deps_by_dists             );
 ok( defined \&CPAN::Dependency::score_by_dists            );
 ok( defined \&CPAN::Dependency::_tree_walk                );
 ok( defined \&CPAN::Dependency::_vprint                   );
+ok( defined \&CPAN::Dependency::clean_build_dir           );
 ok( defined \&CPAN::Dependency::color                     );
 ok( defined \&CPAN::Dependency::debug                     );
 ok( defined \&CPAN::Dependency::verbose                   );
@@ -37,6 +38,7 @@ ok( ref $cpandep->can('score_by_dists')                   );
 ok( ref $cpandep->can('_tree_walk')                       );
 ok( ref $cpandep->can('_vprint')                          );
 ok( ref $cpandep->can('_vprintf')                         );
+ok( ref $cpandep->can('clean_build_dir')                  );
 ok( ref $cpandep->can('color')                            );
 ok( ref $cpandep->can('debug')                            );
 ok( ref $cpandep->can('verbose')                          );

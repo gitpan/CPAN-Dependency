@@ -11,6 +11,7 @@ table.board {
   float: left;
   margin: 1em 2em;
   border: solid 1px #ddd;
+  border-collapse: collapse;
 }
 
 table.board caption {
@@ -23,6 +24,40 @@ table.board th {
   background-color: #ddd;
 }
 
-table.board td {
-  
+table.board th, table.board td {
+  padding: 2px;
+}
+
+table.board tr:hover {
+  background-color: #eef;
+}
+
+table.board tr:hover td a:first-child {
+  font-weight: bold;
+}
+
+table.board tr .popup {
+  display: none;
+}
+
+table.board tr:hover .popup {
+  display: block;
+  position: relative;
+}
+
+table.board tr:hover .popup div {
+  position: absolute;
+  border: solid 1px #999;
+  border-left: solid 1px #ccc;
+  border-top: none;
+  background-color: #fee;
+  padding: 2px;
+}
+
+.used-by {
+  width: 400%;
+}
+
+.prereqs {
+  width: 200%;
 }
