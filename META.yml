@@ -1,17 +1,16 @@
---- #YAML:1.0
+---
 name: CPAN-Dependency
-version: 0.05
+version: 0.06
 author:
-  - |-
-    Sébastien Aperghis-Tramoni <sebastien@aperghis.net>
-abstract: |-
-  Analyzes CPAN modules and generates their dependency tree
+  - Sébastien Aperghis-Tramoni <sebastien@aperghis.net>
+abstract: Analyzes CPAN modules and generates their dependency tree
 license: perl
 requires:
-  CPANPLUS: 0.051
+  CPANPLUS: 0.053
+  DBD::SQLite2: 0
+  DBI: 1.0
   File::Slurp: 0
   File::Spec: 0
-  File::Temp: 0
   Test::Deep: 0
   Test::More: 0
   Test::Warn: 0
@@ -19,5 +18,5 @@ requires:
 provides:
   CPAN::Dependency:
     file: lib/CPAN/Dependency.pm
-    version: 0.05
-generated_by: Module::Build version 0.2608
+    version: 0.06
+generated_by: Module::Build version 0.2609

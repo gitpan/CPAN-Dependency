@@ -3,6 +3,8 @@ use strict;
 use Carp;
 use CPANPLUS::Backend;
 use Cwd;
+use DBI;
+use DBD::SQLite2;
 use File::Spec;
 use File::Slurp;
 use YAML qw(LoadFile DumpFile);
@@ -11,7 +13,7 @@ require Exporter;
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.05';
+  $VERSION = '0.06';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -24,15 +26,33 @@ CPAN::Dependency - Analyzes CPAN modules and generates their dependency tree
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 
-    # find and print the 10 most required CPAN distributions
+Find and print the 10 most required CPAN distributions by 
+stand-alone processing.
+
     use CPAN::Dependency;
 
     my $cpandeps = CPAN::Dependency->new(process => ALL_CPAN);
     $cpandeps->run;  # this may take some time..
+    $cpandep->calculate_score;
+
+    my %score = $cpandep->score_by_dists;
+    my @dists = sort { $score{$b} <=> $score{$a} } keys %score;
+    print "Top 10 modules\n";
+    for my $dist (@dists[0..9]) {
+        printf "%5d %s\n", $score{$dist}, $dist;
+    }
+
+Same thing, but this time by loading the prerequisites information 
+from the CPANTS database. 
+
+    use CPAN::Dependency;
+    my $cpandep = new CPAN::Dependency;
+    $cpandep->load_cpants_db(file => 'cpants.db');
+    $cpandep->calculate_score;
 
     my %score = $cpandep->score_by_dists;
     my @dists = sort { $score{$b} <=> $score{$a} } keys %score;
@@ -45,6 +65,9 @@ Version 0.05
 
 This module can process a set of distributions, up to the whole CPAN, 
 and extract the dependency relations between these distributions. 
+Alternatively, it can load the prerequisites information from a 
+CPANTS database. 
+
 It also calculates a score for each distribution based on the number 
 of times it appears in the prerequisites of other distributions. 
 The algorithm is described in more details in L<"SCORE CALCULATION">. 
@@ -178,7 +201,6 @@ sub new {
         
         skip => {               # distributions to skip (during processing)
             'perl'       => 1, 
-            'perl-5.8.6' => 1, 
             'parrot'     => 1, 
             'ponie'      => 1, 
         }, 
@@ -277,7 +299,7 @@ Add distributions and modules to the skip list, passing as a list:
 
 Add distributions and modules to the skip list, passing as an arrayref: 
 
-    $cpandep->skip('libwww-perl', 'Net::SSLeay', 'CGI.pm');
+    $cpandep->skip(['libwww-perl', 'Net::SSLeay', 'CGI.pm']);
 
 =cut
 
@@ -382,6 +404,8 @@ sub run {
         # author, 1 otherwise. 
         # 
         for my $reqmod (keys %$deps) {
+            $reqmod =~ s/^\s+//g; $reqmod =~ s/\s+$//g;
+
             $self->_vprint("  >> $BOLD${YELLOW}ignoring prereq $reqmod$RESET\n") 
               and next if $self->{ignore}{$reqmod};
             
@@ -445,6 +469,20 @@ sub deps_by_dists {
     return $_[0]->{prereqs}
 }
 
+
+=item score_by_dists()
+
+Returns a new hash that contains the score of the processed distributions, 
+indexed by the distribution names. 
+
+=cut
+
+sub score_by_dists {
+    my $self = shift;
+    return map { $_ => $self->{prereqs}{$_}{score} } keys %{$self->{prereqs}};
+}
+
+
 =item save_deps_tree()
 
 Saves the dependency tree of the object to a YAML stream. 
@@ -476,6 +514,7 @@ sub save_deps_tree {
     }
 }
 
+
 =item load_deps_tree()
 
 Loads a YAML stream that contains a dependency tree into the current object. 
@@ -506,16 +545,72 @@ sub load_deps_tree {
     }
 }
 
-=item score_by_dists()
 
-Returns a new hash that contains the score of the processed distributions, 
-indexed by the distribution names. 
+=item load_cpants_db()
+
+Loads the prerequisites information from the given CPANTS database. 
+Expect one of the following options. 
+
+B<Options>
+
+=over 4
+
+=item *
+
+C<file> - loads from the given file.
+
+=back
+
+B<Examples>
+
+    $cpandep->load_cpants_db(file => 'cpants.db');
 
 =cut
 
-sub score_by_dists {
+sub load_cpants_db {
     my $self = shift;
-    return map { $_ => $self->{prereqs}{$_}{score} } keys %{$self->{prereqs}};
+    carp "error: No argument given to function load_cpants_db()" and return unless @_;
+    my %args = @_;
+    my $cpants_db = $args{file};
+    my $dbh = DBI->connect("dbi:SQLite2:dbname=$cpants_db", '', '')
+      or croak "fatal: Can't read SQLite database: $DBI::errstr";
+
+    my $dists_sth = $dbh->prepare(
+       'SELECT dist.id, dist.dist_without_version, authors.cpanid, authors.author 
+        FROM dist, authors 
+        WHERE authors.cpanid=dist.author'
+    );
+
+    my $prereqs_sth = $dbh->prepare('SELECT requires FROM prereq WHERE distid=?');
+    
+    my @distinfo = ();
+    $dists_sth->execute;
+    while(@distinfo = $dists_sth->fetchrow_array) {
+        $prereqs_sth->execute($distinfo[0]);
+        my $prereqs = $prereqs_sth->fetchall_arrayref;
+        my @prereqs = ();
+        push @prereqs, map { @$_ } @$prereqs;
+        
+        my %deps = ();
+        for my $reqmod (@prereqs) {
+            $reqmod =~ s/^\s+//g; $reqmod =~ s/\s+$//g;
+            next if $self->{ignore}{$reqmod};
+            my $reqdist = eval { $self->{backend}->parse_module(module => $reqmod) };
+            unless(defined $reqdist) { $deps{$reqmod} = 1; next }
+            next if $reqdist->package_is_perl_core;
+            $deps{$reqdist->package_name} = $reqdist->author->cpanid ne $distinfo[2] ? 1 : 0;
+	}
+        
+        $self->{prereqs}{$distinfo[1]} = {
+            prereqs => { %deps }, 
+            used_by => { }, 
+            score => 0, 
+            cpanid => $distinfo[2], 
+            author => $distinfo[3], 
+        };
+    }
+    
+    $dbh->disconnect;
 }
 
 =back
@@ -711,8 +806,7 @@ mini-CPAN using C<CPAN::Mini::Inject>. This is useful if you want to
 use C<CPAN::Dependency> on modules that are not publicly shared on 
 the CPAN. 
 
-More information at L<http://search.cpan.org/dist/CPAN-Mini/> and 
-L<http://search.cpan.org/dist/CPAN-Mini-Inject/>.
+For more information see L<CPAN::Mini> and L<CPAN::Mini::Inject>.
 
 =head2 Ramdisk
 
@@ -810,6 +904,14 @@ B<(W)> You gave to C<new()> an unknown attribute name.
 =back
 
 
+=head1 SEE ALSO
+
+L<CPANPLUS::Backend>
+
+The CPANTS web site at L<http://http://cpants.dev.zsi.at/>, where the 
+CPANTS database can be downloaded. 
+
+
 =head1 AUTHOR
 
 SE<eacute>bastien Aperghis-Tramoni, E<lt>sebastien@aperghis.netE<gt>
@@ -817,7 +919,7 @@ SE<eacute>bastien Aperghis-Tramoni, E<lt>sebastien@aperghis.netE<gt>
 =head1 BUGS
 
 Please report any bugs or feature requests to
-L<bug-cpan-dependency@rt.cpan.org>, or through the web interface at
+C<bug-cpan-dependency@rt.cpan.org>, or through the web interface at
 L<https://rt.cpan.org/NoAuth/ReportBug.html?Queue=CPAN-Dependency>. 
 I will be notified, and then you'll automatically be notified 
 of progress on your bug as I make changes.

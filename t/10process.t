@@ -3,7 +3,7 @@ use Test::More;
 use Test::Deep;
 use File::Temp qw(:POSIX);
 use YAML qw(LoadFile);
-BEGIN { plan tests => 86 }
+BEGIN { plan tests => 91 }
 use CPAN::Dependency;
 
 # create an object
@@ -17,7 +17,7 @@ is( ref $cpandep, 'CPAN::Dependency'        , "object is of expected ref"    );
 # Checking that the whole thing works as expected. We'll ask the dependencies 
 # of several distributions then check that the information are what we know
 my @mods = qw(
-    WWW::Mechanize  Maypole  Template  CPAN::Search::Lite  Net::Pcap  SVK  
+    WWW::Mechanize  Maypole  Template  CPAN::Search::Lite  Net::Pcap  SVK  Test::Class
 );
 my %dists = (
     'WWW::Mechanize' => 'WWW-Mechanize', 
@@ -26,6 +26,7 @@ my %dists = (
     'CPAN::Search::Lite' => 'CPAN-Search-Lite', 
     'Net::Pcap' => 'Net-Pcap', 
     'SVK' => 'SVK', 
+    'Test::Class' => 'Test-Class', 
 );
 my %prereqs = (
     'CPAN-Search-Lite' => {
@@ -38,10 +39,12 @@ my %prereqs = (
             'CPAN-DistnameInfo' => 1, 
             'Config-IniFiles' => 1, 
             'DBD-mysql' => 1, 
+            'File-Temp' => 1, 
             'IO-Zlib' => 1, 
             'Lingua-Stem' => 1, 
             'Lingua-StopWords' => 1, 
             'PathTools' => 1, 
+            'Pod-Parser' => 1, 
             'Sort-Versions' => 1, 
             'XML-Parser' => 1, 
             'YAML' => 1, 
@@ -92,6 +95,7 @@ my %prereqs = (
             'Algorithm-Diff' => 1, 
             'Clone' => 1, 
             'Data-Hierarchy' => 0, 
+            'File-Temp' => 1, 
             'File-Type' => 1, 
             'IO-Digest' => 0, 
             'PerlIO-eol' => 1, 
@@ -106,6 +110,13 @@ my %prereqs = (
             'URI' => 1, 
             'YAML' => 1, 
         }, 
+        used_by => ignore(), 
+        score => 0, 
+    }, 
+    'Test-Class' => {
+        author => 'Adrian Howard', 
+        cpanid => 'ADIE', 
+        prereqs => {}, 
         used_by => ignore(), 
         score => 0, 
     }, 
@@ -124,7 +135,9 @@ my %prereqs = (
         cpanid => 'PETDANCE', 
         prereqs => {
             'libwww-perl' => 1, 
+            'File-Temp' => 1, 
             'HTML-Parser' => 1, 
+            'Pod-Parser' => 1, 
             'Test-Simple' => 1, 
             'URI' => 1, 
         }, 

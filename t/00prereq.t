@@ -20,12 +20,13 @@ YAML
 
 if(defined $requires) {
     no strict 'refs';
+    diag("Checking required modules");
     for my $prereq (keys %$requires) {
         eval "use $prereq";
         if($@) {
-            diag("  $prereq not found")
+            diag(" *** $prereq not found ***")
         } else {
-            diag( "  using $prereq ".($prereq->VERSION || ${"${prereq}::VERSION"} || '') )
+            diag(" - using $prereq ".($prereq->VERSION || ${"${prereq}::VERSION"} || ''))
         }
     }
 }

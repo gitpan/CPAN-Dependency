@@ -1,7 +1,7 @@
 use strict;
 use Test::More;
 use Test::Warn;
-BEGIN { plan tests => 9 }
+BEGIN { plan tests => 10 }
 use CPAN::Dependency;
 
 # create an object
@@ -23,7 +23,7 @@ for my $attr (qw(process skip)) {
       "checking warning of attribute $attr"
 }
 
-for my $func (qw(save_deps_tree load_deps_tree)) {
+for my $func (qw(save_deps_tree load_deps_tree load_cpants_db)) {
     warning_is {
         $cpandep->$func
     } "error: No argument given to function $func()", 
