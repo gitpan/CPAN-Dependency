@@ -1,0 +1,17 @@
+Build.PL
+Changes
+MANIFEST
+META.yml
+Makefile.PL
+README
+LICENSE
+LICENSE.Artistic
+LICENSE.GPL
+eg/cpandep
+lib/CPAN/Dependency.pm
+t/00load.t
+t/00prereq.t
+t/distchk.t
+t/podcover.t
+t/pod.t
+t/portfs.t
