@@ -11,6 +11,7 @@ my $builder = Module::Build->new(
         'CPANPLUS' => '0.051',
         'File::Slurp' => 0,
         'File::Spec' => 0,
+        'File::Temp' => 0,
         'Test::Deep' => 0,
         'Test::More' => 0,
         'YAML' => 0,

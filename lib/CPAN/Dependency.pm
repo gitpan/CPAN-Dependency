@@ -10,7 +10,7 @@ require Exporter;
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.03';
+  $VERSION = '0.04';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -23,7 +23,7 @@ CPAN::Dependency - Analyzes CPAN modules and generates their dependency tree
 
 =head1 VERSION
 
-Version 0.01
+Version 0.04
 
 =head1 SYNOPSIS
 
@@ -115,9 +115,15 @@ sub new {
         
         prereqs => { },         # distributions dependencies
         
-        skip => {               # modules/distributions to skip
+        skip => {               # distributions to skip (during processing)
             'perl'       => 1, 
             'perl-5.8.6' => 1, 
+            'parrot'     => 1, 
+            'ponie'      => 1, 
+        }, 
+        
+        ignore => {             # distributions to ignore (during dependencies calculations)
+            'perl'       => 1, 
             'parrot'     => 1, 
             'ponie'      => 1, 
         }, 
@@ -142,7 +148,7 @@ sub new {
 
     # treat arguments for which an accessor exists
     for my $attr (keys %args) {
-        $self->$attr($args{$attr}) and delete $args{$attr} if $self->can($attr);
+        defined($self->$attr($args{$attr})) and delete $args{$attr} if $self->can($attr);
     }
 
     # treat remaining arguments
@@ -174,6 +180,16 @@ Adds given distribution or module names to the list of packages to process.
 The special argument C<ALL_CPAN> can be used to specify that you want to 
 process all packages in the CPAN. 
 
+B<Examples>
+
+Add distributions and modules to the process list, passing as a list: 
+
+    $cpandep->process('WWW::Mechanize', 'Maypole', 'CPAN-Search-Lite');
+
+Add distributions and modules to the process list, passing as an arrayref: 
+
+    $cpandep->process(['WWW-Mechanize', 'Maypole::Application', 'CPAN::Search::Lite']);
+
 =cut
 
 sub process {
@@ -191,6 +207,16 @@ sub process {
 
 Adds given distribution or module names to the list of packages that you 
 I<don't want> to process. 
+
+B<Examples>
+
+Add distributions and modules to the skip list, passing as a list: 
+
+    $cpandep->skip('LWP::UserAgent', 'Net_SSLeay.pm', 'CGI');
+
+Add distributions and modules to the skip list, passing as an arrayref: 
+
+    $cpandep->skip('libwww-perl', 'Net::SSLeay', 'CGI.pm');
 
 =cut
 
@@ -252,7 +278,6 @@ sub run {
                 $deps = $deps->{requires};
             };
             $self->_vprint("  >> $BOLD${RED}YAML error: $@$RESET\n") if $@;
-            
         
         # if not, we must try harder
         } else {
@@ -279,7 +304,7 @@ sub run {
         $deps ||= {};
         my %deps = ();
         
-        print "  \e[1;32mprereqs: ", join(', ', sort keys %$deps), "\e[0m\n";
+        $self->_vprint("  \e[1;32mprereqs: ", join(', ', sort keys %$deps), "\e[0m\n");
         
         # $deps contains module names, but we really want distribution names
         # %deps will have the following structure: 
@@ -296,6 +321,9 @@ sub run {
         # author, 1 otherwise. 
         # 
         for my $reqmod (keys %$deps) {
+            $self->_vprint("  >> $BOLD${YELLOW}ignoring prereq $reqmod$RESET\n") 
+              and next if $self->{ignore}{$reqmod};
+            
             my $reqdist = eval { $cpan->parse_module(module => $reqmod) };
             $self->_vprint("  >> $BOLD${RED}error: no dist found for $reqmod$RESET\n") 
               and next unless defined $reqdist;
@@ -316,7 +344,7 @@ sub run {
     } continue {
         # clean up
         eval {
-           $cpan->_rmdir(dir => $where) if -d $where;
+           $cpan->_rmdir(dir => $where) if defined $where and -d $where;
            $cpan->_rmdir(dir => $self->{build_dir});
            $cpan->_mkdir(dir => $self->{build_dir});
         }
@@ -511,7 +539,7 @@ sub color {
     if(defined $_[0]) {
         $self->{options}{color} = $_[0];
         ($RESET , $BOLD  , $RED    , $GREEN  , $YELLOW) = 
-          $self->{option}{color} ? 
+          $self->{options}{color} ? 
             ("\e[0m", "\e[1m", "\e[31m", "\e[32m", "\e[33m") : 
             ('')x5
     }
@@ -571,16 +599,16 @@ for each distribution I<D>
 
 =item 2
 
-C<    >for each prerequisite I<P> of this distribution
+S< >S< >for each prerequisite I<P> of this distribution
 
 =item 3
 
-C<        >if both I<D> and I<P> are not made by the same auhor, 
+S< >S< >S< >S< >if both I<D> and I<P> are not made by the same auhor, 
 update the score of I<P> by adding it the current dependency depth
 
 =item 4
 
-C<        >recurse step 1 using I<P>
+S< >S< >S< >S< >recurse step 1 using I<P>
 
 =back
 
