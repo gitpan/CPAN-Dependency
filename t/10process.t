@@ -3,7 +3,7 @@ use Test::More;
 use Test::Deep;
 use File::Temp qw(:POSIX);
 use YAML qw(LoadFile);
-BEGIN { plan tests => 91 }
+BEGIN { plan tests => 92 }
 use CPAN::Dependency;
 
 # create an object
@@ -93,6 +93,7 @@ my %prereqs = (
         prereqs => {
             'Algorithm-Annotate' => 0, 
             'Algorithm-Diff' => 1, 
+            'Class-Autouse' => 1, 
             'Clone' => 1, 
             'Data-Hierarchy' => 0, 
             'File-Temp' => 1, 

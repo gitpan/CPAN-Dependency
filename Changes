@@ -1,40 +1,44 @@
 Revision history for CPAN-Dependency
 
+0.07    2005.04.03
+        [TESTS] Corrected t/01api.t
+        [TESTS] Updated t/10process.t
+
 0.06    2005.03.19
-        Added function load_cpants_db(). 
-        Added eg/cpants
-        Updated documentation.
-        Updated t/10process.t
+        [FEATURE] Added function load_cpants_db(). 
+        [NEW] Added eg/cpants
+        [DOC] Updated documentation.
+        [TESTS] Updated t/10process.t
 
 0.05    2005.01.31
-        Now keeping unknown (non CPAN) dependencies.
-        Now recording by which distributions a dist is used.
-        Added option clean_build_dir to control when deleteting the CPANPLUS build dir.
-        Added t/03errors.t
+        [FEATURE] Now keeping unknown (non CPAN) dependencies.
+        [FEATURE] Now recording by which distributions a dist is used.
+        [FEATURE] Added option clean_build_dir to control when deleteting the CPANPLUS build dir.
+        [TESTS] Added t/03errors.t
         Created a new report with more up-to-date data.
         Updated Changes (d'oh!)
 
 0.04    2005.01.30
-        Fixed RT#11267 (Adam Kennedy): Cannot create an object with verbose enabled
-        Fixed RT#11269 (Adam Kennedy): Prevent "perl" from appearing as a prereq
-        Added more tests in t/02internals.t
-        Added t/10process.t, t/11skip.t
+        [BUGFIX] RT#11267 (Adam Kennedy): Cannot create an object with verbose enabled
+        [BUGFIX] RT#11269 (Adam Kennedy): Prevent "perl" from appearing as a prereq
+        [TESTS] Added more tests in t/02internals.t
+        [TESTS] Added t/10process.t, t/11skip.t
 
 0.03    2005.01.27
-        Now read META.yml directly instead of using Module::Depends. 
-        Now parsing Makefile.PL or Build.PL when no META.yml is found.
-        Now skip bundles. 
-        Put out the score calculation in a new method calculate_score().
-        Added methods save_deps_tree() and load_deps_tree().
+        [FEATURE] Put out the score calculation in a new method calculate_score().
+        [FEATURE] Added methods save_deps_tree() and load_deps_tree().
+        [NEW] Now read META.yml directly instead of using Module::Depends. 
+        [NEW] Now parsing Makefile.PL or Build.PL when no META.yml is found.
+        [NEW] Now skip bundles. 
         Splitted eg/cpandep into eg/find_deps and eg/score
         Added eg/mkreport, eg/report.html and eg/style.css
-        Added t/02internals.t
+        [TESTS] Added t/02internals.t
 
 0.02    2005.01.23
-        Now avoid some cases where CPANPLUS could make CPAN::Dependency die. 
-        Added t/01api.t
+        [BUGFIX] Now avoid some cases where CPANPLUS could make CPAN::Dependency die. 
+        [TESTS] Added t/01api.t
         Updated eg/cpandep.
-        Updated documentation. 
+        [DOC] Updated documentation. 
 
 0.01    2005.01.20
         First version, released on an unsuspecting world.

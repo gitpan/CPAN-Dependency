@@ -4,23 +4,23 @@ BEGIN { plan tests => 39 }
 use CPAN::Dependency;
 
 # check that the following functions are available
-ok( defined \&CPAN::Dependency::new                       );
-ok( defined \&CPAN::Dependency::process                   );
-ok( defined \&CPAN::Dependency::skip                      );
-ok( defined \&CPAN::Dependency::run                       );
-ok( defined \&CPAN::Dependency::calculate_score           );
-ok( defined \&CPAN::Dependency::deps_by_dists             );
-ok( defined \&CPAN::Dependency::score_by_dists            );
-ok( defined \&CPAN::Dependency::save_deps_tree            );
-ok( defined \&CPAN::Dependency::load_deps_tree            );
-ok( defined \&CPAN::Dependency::load_cpants_db            );
-ok( defined \&CPAN::Dependency::_tree_walk                );
-ok( defined \&CPAN::Dependency::_vprint                   );
-ok( defined \&CPAN::Dependency::clean_build_dir           );
-ok( defined \&CPAN::Dependency::color                     );
-ok( defined \&CPAN::Dependency::debug                     );
-ok( defined \&CPAN::Dependency::verbose                   );
-ok( defined \&CPAN::Dependency::prefer_bin                );
+ok( exists &CPAN::Dependency::new                         );
+ok( exists &CPAN::Dependency::process                     );
+ok( exists &CPAN::Dependency::skip                        );
+ok( exists &CPAN::Dependency::run                         );
+ok( exists &CPAN::Dependency::calculate_score             );
+ok( exists &CPAN::Dependency::deps_by_dists               );
+ok( exists &CPAN::Dependency::score_by_dists              );
+ok( exists &CPAN::Dependency::save_deps_tree              );
+ok( exists &CPAN::Dependency::load_deps_tree              );
+ok( exists &CPAN::Dependency::load_cpants_db              );
+ok( exists &CPAN::Dependency::_tree_walk                  );
+ok( exists &CPAN::Dependency::_vprint                     );
+ok( exists &CPAN::Dependency::clean_build_dir             );
+ok( exists &CPAN::Dependency::color                       );
+ok( exists &CPAN::Dependency::debug                       );
+ok( exists &CPAN::Dependency::verbose                     );
+ok( exists &CPAN::Dependency::prefer_bin                  );
 
 # create an object
 my $cpandep = undef;

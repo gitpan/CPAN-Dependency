@@ -13,7 +13,7 @@ require Exporter;
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.06';
+  $VERSION = '0.07';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
