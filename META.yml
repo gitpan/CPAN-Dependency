@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name: CPAN-Dependency
-version: 0.01
+version: 0.02
 author:
   - |-
     Sébastien Aperghis-Tramoni <sebastien@aperghis.net>
@@ -16,5 +16,5 @@ requires:
 provides:
   CPAN::Dependency:
     file: lib/CPAN/Dependency.pm
-    version: 0.01
+    version: 0.02
 generated_by: Module::Build version 0.2607

@@ -10,7 +10,7 @@ require Exporter;
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.01';
+  $VERSION = '0.02';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -30,12 +30,22 @@ Version 0.01
     use CPAN::Dependency;
 
     my $cpandeps = CPAN::Dependency->new(process => ALL_CPAN);
-    $cpandeps->run;
+    $cpandeps->run;  # this may take some time..
+
+    my %score = $cpandep->score_by_dists;
+    my @dists = sort { $score{$b} <=> $score{$a} } keys %score;
+    print "Top 10 modules\n";
+    for my $dist (@dists[0..9]) {
+        printf "%5d %s\n", $score{$dist}, $dist;
+    }
 
 =head1 DESCRIPTION
 
 This module can process a set of distributions, up to the whole CPAN, 
 and extract the dependency relations between these distributions. 
+It also calculates a score for each distribution based on the number 
+of times it appears in the prerequisites of other distributions. 
+The algorithm is descibed in more details in L<"SCORE CALCULATION">. 
 
 =head1 METHODS
 
@@ -77,8 +87,14 @@ C<verbose> - sets the verbose mode.
 
 B<Examples>
 
+Create a new C<CPAN::Dependency> object with verbose mode enabled 
+and adds three "big" modules to the process list:
+
     my $cpandeps = new CPAN::Dependency verbose => 1, 
             process => [qw(WWW::Mechanize Maypole Template)]
+
+Create a new C<CPAN::Dependency> object with verbose mode enabled 
+and adds all the distributions from the CPAN to the process list: 
 
     my $cpandeps = new CPAN::Dependency verbose =>1, process => ALL_CPAN;
 
@@ -164,7 +180,7 @@ sub process {
     my $self = shift;
     croak "warning: No argument given to atribute 'process'." and return unless @_;
     if($_[0] eq ALL_CPAN) {
-        push @{ $self->{process} }, keys %{ $self->{backend}->module_tree }
+        push @{ $self->{process} }, sort keys %{ $self->{backend}->module_tree }
     } else {
         push @{ $self->{process} }, ref $_[0] ? @{$_[0]} : @_
     }
@@ -207,17 +223,21 @@ sub run {
         my $dist = $cpan->parse_module(module => $name);
         my $dist_name = $dist->package_name;
         
-        $self->_vprintf("$BOLD%s$RESET %s by %s (%s)\n", $dist_name, 
+        $self->_vprint($name);
+        $self->_vprint("  >> ${YELLOW}skip$RESET\n") and
+          next if not defined $dist or $self->{skip}{$dist_name}++;
+        
+        $self->_vprintf(" => $BOLD%s$RESET %s by %s (%s)\n", $dist_name, 
           $dist->package_version, $dist->author->cpanid, $dist->author->author);
         
         $archive = $where = '';
         
-        $self->_vprint("  >> ${YELLOW}skip$RESET\n") and
-        next if $self->{skip}{$dist_name}++;
-        
         # fetch and extract the module
-        $archive = $dist->fetch(force => 1) or next;
-        $where   = $dist->extract(force => 1) or next;
+        eval {
+            $archive = $dist->fetch(force => 1) or next;
+            $where   = $dist->extract(force => 1) or next;
+        };
+        $self->_vprint("  >> $BOLD${RED}CPANPLUS error: $@$RESET\n") and next if $@;
 
         # read its dependencies
         my $deps = undef;
@@ -272,7 +292,7 @@ sub run {
             $self->_vprint("  >> $BOLD${RED}error: no dist found for $reqmod$RESET\n") 
               and next unless defined $reqdist;
             
-            $self->_vprint("  >> $BOLD${YELLOW}$reqmod is in Perl core, skipping$RESET\n") 
+            $self->_vprint("  >> $BOLD${YELLOW}$reqmod is in Perl core$RESET\n") 
               and next if $reqdist->package_is_perl_core;
             
             $deps{$reqdist->package_name} = $reqdist->author->cpanid ne $dist->author->cpanid ? 1 : 0;
@@ -288,7 +308,7 @@ sub run {
     } continue {
         # clean up
         eval {
-           $cpan->_rmdir(dir => $where) if $where;
+           $cpan->_rmdir(dir => $where) if -d $where;
            $cpan->_rmdir(dir => $self->{build_dir});
            $cpan->_mkdir(dir => $self->{build_dir});
         }
@@ -449,24 +469,36 @@ Sets verbose mode to on (1) or off (0). Defaults to off.
 =back
 
 
-=head1 DIAGNOSTICS
+=head1 SCORE CALCULATION
+
+Once the prerequisites for each distribution have been found, the score 
+of each distribution is calculated using the following algorithm: 
 
 =over 4
 
-=item Can't create CPANPLUS::Backend object
+=item 1
 
-B<(F)> C<CPANPLUS::Backend> was unable to create and return a new object. 
+for each distribution I<D>
 
-=item No argument given to atribute '%s'
+=item 2
 
-B<(W)> As the message implies, you didn't supply the expected argument 
-to the attribute. 
+S<    >for each prerequisite I<P> of this distribution
 
-=item Unknown option '%s': ignoring
+=item 3
 
-B<(W)> You gave to C<new()> an unknown attribute name.
+S<        >if both I<D> and I<P> are not made by the same auhor, 
+update the score of I<P> by adding it the current dependency depth
+
+=item 4
+
+S<        >recurse step 1 using I<P>
 
 =back
+
+The aim of this algorithm is to increase the score of distributions 
+that are depended upon by many other distributions, while avoiding the 
+cases where one author releases a horde of modules which depend upon 
+each others. 
 
 
 =head1 SPEED TIPS
@@ -476,7 +508,7 @@ many modules (or the whole CPAN).
 
 =head2 Local mirror
 
-If it's the case yet, you should use C<CPAN::Mini> to create your own 
+If it's not the case yet, you should use C<CPAN::Mini> to create your own 
 mini-CPAN local mirror. Then you just need to configure C<CPANPLUS> to 
 use your mini-CPAN instead of a network mirror. A mini-CPAN can also be 
 shared using a web server but if you want speed, you should keep one on 
@@ -542,6 +574,43 @@ F<author/> will contain a copy of each processed archive. When processing
 the whole CPAN, it means that you'll have here a complete copy of your 
 mini-CPAN, so be sure that you have enought disk space (or symlink 
 this directory as well to another volume when you have enought space). 
+
+=head3 Ramdisk for Mac OS X
+
+Here is a small shell script that creates, format and mount a ramdisk 
+of S<32 MB>. Its size can be changed by changing the number of blocks, 
+where one block is S<512 bytes>. 
+
+    #!/bin/sh
+    BLOCK=64000
+    dev=`hdid -nomount ram://$BLOCKS`
+    newfs_hfs -v RAMDisk $dev
+    mkdir /Volumes/RAMDisk
+    chmod 777 /Volumes/RAMDisk
+    mount -t hfs $dev /Volumes/RAMDisk
+
+Then follow the same instructions for moving the F<build/> directory 
+as given for Linux. 
+
+
+=head1 DIAGNOSTICS
+
+=over 4
+
+=item Can't create CPANPLUS::Backend object
+
+B<(F)> C<CPANPLUS::Backend> was unable to create and return a new object. 
+
+=item No argument given to atribute '%s'
+
+B<(W)> As the message implies, you didn't supply the expected argument 
+to the attribute. 
+
+=item Unknown option '%s': ignoring
+
+B<(W)> You gave to C<new()> an unknown attribute name.
+
+=back
 
 
 =head1 AUTHOR

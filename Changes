@@ -1,5 +1,11 @@
 Revision history for CPAN-Dependency
 
-0.01    2005.01.2x
+0.02    2005.01.23
+        Now avoid some cases where CPANPLUS could make CPAN::Dependency die. 
+        Added t/01api.t
+        Updated eg/cpandep.
+        Updated documentation. 
+
+0.01    2005.01.20
         First version, released on an unsuspecting world.
 

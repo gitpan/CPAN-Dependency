@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use CPAN::Dependency;
+use YAML qw(DumpFile);
 
 my $cpandep = new CPAN::Dependency process => ALL_CPAN;
 $cpandep->verbose(1);
@@ -13,3 +14,7 @@ for my $dist (@dists[0..9]) {
     printf "%5d %s\n", $score{$dist}, $dist;
 }
 
+unlink('deps.yml');
+DumpFile('deps.yml', $cpandep->deps_by_dists);
+unlink('score.yml');
+DumpFile('score.yml', \%score);

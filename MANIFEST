@@ -11,6 +11,7 @@ eg/cpandep
 lib/CPAN/Dependency.pm
 t/00load.t
 t/00prereq.t
+t/01api.t
 t/distchk.t
 t/podcover.t
 t/pod.t
