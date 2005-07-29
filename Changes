@@ -1,5 +1,13 @@
 Revision history for CPAN-Dependency
 
+0.08    2005.07.29
+        [FEATURE] Now can parse some types of Module::Install Makefile.PL.
+        [TESTS] Updated t/10process.t and t/11skip.t
+
+        2005.06.26
+        [FEATURE] Now using Module::CoreList to skip core modules in order to avoid warnings.
+        [BUGFIX] Updated load_cpants_db() to keep up with CPANTS database schema changes.
+
 0.07    2005.04.03
         [TESTS] Corrected t/01api.t
         [TESTS] Updated t/10process.t
@@ -15,8 +23,8 @@ Revision history for CPAN-Dependency
         [FEATURE] Now recording by which distributions a dist is used.
         [FEATURE] Added option clean_build_dir to control when deleteting the CPANPLUS build dir.
         [TESTS] Added t/03errors.t
-        Created a new report with more up-to-date data.
-        Updated Changes (d'oh!)
+        [EXAMPLES] Created a new report with more up-to-date data.
+        [DOC] Updated Changes (d'oh!)
 
 0.04    2005.01.30
         [BUGFIX] RT#11267 (Adam Kennedy): Cannot create an object with verbose enabled
@@ -30,14 +38,14 @@ Revision history for CPAN-Dependency
         [NEW] Now read META.yml directly instead of using Module::Depends. 
         [NEW] Now parsing Makefile.PL or Build.PL when no META.yml is found.
         [NEW] Now skip bundles. 
-        Splitted eg/cpandep into eg/find_deps and eg/score
-        Added eg/mkreport, eg/report.html and eg/style.css
+        [EXAMPLES] Splitted eg/cpandep into eg/find_deps and eg/score
+        [EXAMPLES] Added eg/mkreport, eg/report.html and eg/style.css
         [TESTS] Added t/02internals.t
 
 0.02    2005.01.23
         [BUGFIX] Now avoid some cases where CPANPLUS could make CPAN::Dependency die. 
         [TESTS] Added t/01api.t
-        Updated eg/cpandep.
+        [EXAMPLES] Updated eg/cpandep.
         [DOC] Updated documentation. 
 
 0.01    2005.01.20

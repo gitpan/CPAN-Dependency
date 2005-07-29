@@ -12,10 +12,12 @@ my $builder = Module::Build->new(
         'DBD::SQLite2' => 0,
         'File::Slurp' => 0,
         'File::Spec' => 0,
+        'YAML' => 0,
+    },
+    build_requires => {
         'Test::Deep' => 0,
         'Test::More' => 0,
         'Test::Warn' => 0,
-        'YAML' => 0,
     },
     add_to_cleanup      => [ 'CPAN-Dependency-*' ],
 );

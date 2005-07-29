@@ -7,13 +7,14 @@ use DBI;
 use DBD::SQLite2;
 use File::Spec;
 use File::Slurp;
+use Module::CoreList;
 use YAML qw(LoadFile DumpFile);
 require Exporter;
 
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.07';
+  $VERSION = '0.08';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -26,7 +27,7 @@ CPAN::Dependency - Analyzes CPAN modules and generates their dependency tree
 
 =head1 VERSION
 
-Version 0.06
+Version 0.08
 
 =head1 SYNOPSIS
 
@@ -355,21 +356,28 @@ sub run {
         my $deps = undef;
         
         # if there's a META.yml, we've won
+        # argh! this is no longer true! distributions like SVK include a META.yml 
+        # with no prereqs :(
         if(-f File::Spec->catfile($where, 'META.yml')) {
             eval {
                 $deps = LoadFile(File::Spec->catfile($where, 'META.yml'));
                 $deps = $deps->{requires};
             };
             $self->_vprint("  >> $BOLD${RED}YAML error: $@$RESET\n") if $@;
+        }
         
         # if not, we must try harder
-        } else {
+        unless(defined $deps and keys %$deps) {
             $self->_vprint("  >> $BOLD${YELLOW}no META.yml; using parsing method$RESET\n");
 
             # distribution uses Makefile.PL
             if(-f File::Spec->catfile($where, 'Makefile.PL')) {
                 my $builder = read_file( File::Spec->catfile($where, 'Makefile.PL') );
-                my($requires) = $builder =~ /PREREQ_PM.*?=>.*?\{(.*?)\}/s;
+                $builder =~ /
+                        (?: PREREQ_PM.*?=>.*?\{(.*?)\} )|   # ExtUtils::MakeMaker
+                        (?: requires\(([^)]*)\))               # Module::Install
+                    /sx;
+                my $requires = $1 || $2;
                 eval "{ no strict; \$deps = { $requires \n} }";
 
             # distribution uses Build.PL
@@ -408,6 +416,9 @@ sub run {
 
             $self->_vprint("  >> $BOLD${YELLOW}ignoring prereq $reqmod$RESET\n") 
               and next if $self->{ignore}{$reqmod};
+
+            $self->_vprint("  >> $BOLD${YELLOW}$reqmod is in Perl core$RESET\n") 
+              and next if Module::CoreList->first_release($reqmod);
             
             my $reqdist = eval { $cpan->parse_module(module => $reqmod) };
             $self->_vprint("  >> $BOLD${RED}error: no dist found for $reqmod$RESET\n") 
@@ -575,17 +586,21 @@ sub load_cpants_db {
     my $dbh = DBI->connect("dbi:SQLite2:dbname=$cpants_db", '', '')
       or croak "fatal: Can't read SQLite database: $DBI::errstr";
 
-    my $dists_sth = $dbh->prepare(
-       'SELECT dist.id, dist.dist_without_version, authors.cpanid, authors.author 
+    my $dists_sth = $dbh->prepare(q{
+        SELECT dist.dist, dist.dist_without_version, authors.cpanid, authors.author 
         FROM dist, authors 
-        WHERE authors.cpanid=dist.author'
-    );
+        WHERE authors.cpanid=dist.author
+    });
 
-    my $prereqs_sth = $dbh->prepare('SELECT requires FROM prereq WHERE distid=?');
-    
+    my $prereqs_sth = $dbh->prepare('SELECT requires FROM prereq WHERE dist=?');
+
+    my $cpan = $self->{backend};
     my @distinfo = ();
     $dists_sth->execute;
     while(@distinfo = $dists_sth->fetchrow_array) {
+        my $dist_cpan_info = undef;
+        eval { $dist_cpan_info = $cpan->parse_module(module => $distinfo[1]) };
+
         $prereqs_sth->execute($distinfo[0]);
         my $prereqs = $prereqs_sth->fetchall_arrayref;
         my @prereqs = ();
@@ -595,18 +610,19 @@ sub load_cpants_db {
         for my $reqmod (@prereqs) {
             $reqmod =~ s/^\s+//g; $reqmod =~ s/\s+$//g;
             next if $self->{ignore}{$reqmod};
-            my $reqdist = eval { $self->{backend}->parse_module(module => $reqmod) };
+            next if Module::CoreList->first_release($reqmod);
+            my $reqdist = eval { $cpan->parse_module(module => $reqmod) };
             unless(defined $reqdist) { $deps{$reqmod} = 1; next }
             next if $reqdist->package_is_perl_core;
             $deps{$reqdist->package_name} = $reqdist->author->cpanid ne $distinfo[2] ? 1 : 0;
-	}
+	    }
         
         $self->{prereqs}{$distinfo[1]} = {
             prereqs => { %deps }, 
             used_by => { }, 
             score => 0, 
-            cpanid => $distinfo[2], 
-            author => $distinfo[3], 
+            cpanid => $distinfo[2] || eval { $dist_cpan_info->author->cpanid }, 
+            author => $distinfo[3] || eval { $dist_cpan_info->author->author }, 
         };
     }
     
@@ -920,7 +936,7 @@ SE<eacute>bastien Aperghis-Tramoni, E<lt>sebastien@aperghis.netE<gt>
 
 Please report any bugs or feature requests to
 C<bug-cpan-dependency@rt.cpan.org>, or through the web interface at
-L<https://rt.cpan.org/NoAuth/ReportBug.html?Queue=CPAN-Dependency>. 
+L<https://rt.cpan.org/NoAuth/Bugs.html?Dist=CPAN-Dependency>. 
 I will be notified, and then you'll automatically be notified 
 of progress on your bug as I make changes.
 

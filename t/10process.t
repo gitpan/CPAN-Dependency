@@ -3,7 +3,7 @@ use Test::More;
 use Test::Deep;
 use File::Temp qw(:POSIX);
 use YAML qw(LoadFile);
-BEGIN { plan tests => 92 }
+BEGIN { plan tests => 87 }
 use CPAN::Dependency;
 
 # create an object
@@ -39,12 +39,13 @@ my %prereqs = (
             'CPAN-DistnameInfo' => 1, 
             'Config-IniFiles' => 1, 
             'DBD-mysql' => 1, 
-            'File-Temp' => 1, 
+            #'File-Temp' => 1, 
             'IO-Zlib' => 1, 
             'Lingua-Stem' => 1, 
             'Lingua-StopWords' => 1, 
-            'PathTools' => 1, 
-            'Pod-Parser' => 1, 
+            #'PathTools' => 1, 
+            'Perl-Tidy' => 1, 
+            #'Pod-Parser' => 1, 
             'Sort-Versions' => 1, 
             'XML-Parser' => 1, 
             'YAML' => 1, 
@@ -55,8 +56,8 @@ my %prereqs = (
         score => 0, 
     }, 
     Maypole => {
-        author => 'Simon Flack', 
-        cpanid => 'SIMONFLK', 
+        author => 'Aaron James Trevena', 
+        cpanid => 'TEEJAY', 
         prereqs => {
             'Cgi-Simple' => 1, 
             'CGI-Untaint' => 1, 
@@ -71,7 +72,7 @@ my %prereqs = (
             'Class-DBI-SQLite' => 1, 
             'Template-Plugin-Class' => 1, 
             'Template-Toolkit' => 1, 
-            'Test-MockModule' => 0, 
+            'Test-MockModule' => 1, 
             'UNIVERSAL-exports' => 1, 
             'UNIVERSAL-moniker' => 1, 
             'URI' => 1, 
@@ -96,7 +97,7 @@ my %prereqs = (
             'Class-Autouse' => 1, 
             'Clone' => 1, 
             'Data-Hierarchy' => 0, 
-            'File-Temp' => 1, 
+            #'File-Temp' => 1, 
             'File-Type' => 1, 
             'IO-Digest' => 0, 
             'PerlIO-eol' => 1, 
@@ -105,7 +106,7 @@ my %prereqs = (
             'Pod-Escapes' => 1, 
             'Pod-Simple' => 1, 
             'Regexp-Shellish' => 1, 
-            'SVN-Mirror' => 0, 
+            #'SVN-Mirror' => 0, 
             'SVN-Simple' => 0, 
             'TimeDate' => 1, 
             'URI' => 1, 
@@ -126,7 +127,7 @@ my %prereqs = (
         cpanid => 'ABW', 
         prereqs => {
             'AppConfig' => 0, 
-            'PathTools' => 1, 
+            #'PathTools' => 1, 
         }, 
         used_by => ignore(), 
         score => 0, 
@@ -136,10 +137,10 @@ my %prereqs = (
         cpanid => 'PETDANCE', 
         prereqs => {
             'libwww-perl' => 1, 
-            'File-Temp' => 1, 
+            #'File-Temp' => 1, 
             'HTML-Parser' => 1, 
-            'Pod-Parser' => 1, 
-            'Test-Simple' => 1, 
+            #'Pod-Parser' => 1, 
+            #'Test-Simple' => 1, 
             'URI' => 1, 
         }, 
         used_by => ignore(), 
@@ -162,7 +163,7 @@ for my $mod (@mods) {
 eval { $cpandep->calculate_score };
 is( $@, '', "calculate_score()" );
 
-is( $cpandep->deps_by_dists->{'Test-Simple'}{score}, '1', "score of Test-Simple" );
+#is( $cpandep->deps_by_dists->{'Test-Simple'}{score}, '1', "score of Test-Simple" );
 is( $cpandep->deps_by_dists->{'URI'        }{score}, '3', "score of URI" );
 is( $cpandep->deps_by_dists->{'libwww-perl'}{score}, '3', "score of libwww-perl" );
 

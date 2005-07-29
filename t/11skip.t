@@ -15,7 +15,7 @@ ok( $cpandep->isa('CPAN::Dependency')       , "object is of expected type"   );
 is( ref $cpandep, 'CPAN::Dependency'        , "object is of expected ref"    );
 
 my @bundles = qw(
-    Bundle::CPANPLUS  Bundle::Math  Bundle::Net::LDAP  Bundle::Phalanx
+    Bundle::CPANPLUS  Bundle::Math  Bundle::Net::LDAP  Bundle::Phalanx100
 );
 my @core = qw(
     Carp  Class::Struct  Fcntl  File::Basename  File::Copy  File::Find
@@ -27,7 +27,7 @@ my %dists = (
     'Bundle::CPANPLUS' => 'Bundle-CPANPLUS', 
     'Bundle::Math' => 'Bundle-Math', 
     'Bundle::Net::LDAP' => 'Bundle-Net-LDAP', 
-    'Bundle::Phalanx' => 'Bundle-Phalanx', 
+    'Bundle::Phalanx100' => 'Bundle-Phalanx', 
 );
 map { $dists{$_} = 'perl' } @core;
 
