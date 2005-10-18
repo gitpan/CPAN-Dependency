@@ -1,5 +1,16 @@
 Revision history for CPAN-Dependency
 
+0.09    2005.10.18
+        [BUGFIX] RT#15093 (David Landgren): Applied patch to handle new CPANTS database 
+        (now in SQLite3 format).
+        [BUGFIX] RT#14541 (Tels): Added better diagnostics. 
+        [DOC] RT#14541 (Tels): Corrected link. 
+        [DOC] RT#14542 (Tels): Added a section "Processing Notes" to clarify the fact 
+        that CPANPLUS must be configured. 
+        [DOC] Corrected small mistake in synopsis.
+        [TESTS] Modified 01api.t
+        [TESTS] Updated t/10process.t
+
 0.08    2005.07.29
         [FEATURE] Now can parse some types of Module::Install Makefile.PL.
         [TESTS] Updated t/10process.t and t/11skip.t

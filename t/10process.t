@@ -1,9 +1,12 @@
 use strict;
 use Test::More;
-use Test::Deep;
+BEGIN {
+  eval "use Test::Deep";
+  plan skip_all => "Test::Deep required for this test" if $@;
+  plan tests => 88;
+}
 use File::Temp qw(:POSIX);
 use YAML qw(LoadFile);
-BEGIN { plan tests => 87 }
 use CPAN::Dependency;
 
 # create an object
@@ -73,8 +76,8 @@ my %prereqs = (
             'Template-Plugin-Class' => 1, 
             'Template-Toolkit' => 1, 
             'Test-MockModule' => 1, 
-            'UNIVERSAL-exports' => 1, 
             'UNIVERSAL-moniker' => 1, 
+            'UNIVERSAL-require' => 1, 
             'URI' => 1, 
             'libwww-perl' => 1, 
         }, 
@@ -82,8 +85,8 @@ my %prereqs = (
         score => 0, 
     }, 
     'Net-Pcap' => {
-        author => 'Tim Potter', 
-        cpanid => 'TIMPOTTER', 
+        author => 'Sebastien Aperghis-Tramoni', 
+        cpanid => 'SAPER', 
         prereqs => {}, 
         used_by => ignore(), 
         score => 0, 
@@ -141,6 +144,7 @@ my %prereqs = (
             'HTML-Parser' => 1, 
             #'Pod-Parser' => 1, 
             #'Test-Simple' => 1, 
+            'Test-LongString' => 1, 
             'URI' => 1, 
         }, 
         used_by => ignore(), 

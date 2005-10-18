@@ -4,7 +4,7 @@ use Carp;
 use CPANPLUS::Backend;
 use Cwd;
 use DBI;
-use DBD::SQLite2;
+use DBD::SQLite;
 use File::Spec;
 use File::Slurp;
 use Module::CoreList;
@@ -14,7 +14,7 @@ require Exporter;
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.08';
+  $VERSION = '0.09';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -27,7 +27,7 @@ CPAN::Dependency - Analyzes CPAN modules and generates their dependency tree
 
 =head1 VERSION
 
-Version 0.08
+Version 0.09
 
 =head1 SYNOPSIS
 
@@ -36,8 +36,8 @@ stand-alone processing.
 
     use CPAN::Dependency;
 
-    my $cpandeps = CPAN::Dependency->new(process => ALL_CPAN);
-    $cpandeps->run;  # this may take some time..
+    my $cpandep = CPAN::Dependency->new(process => ALL_CPAN);
+    $cpandep->run;  # this may take some time..
     $cpandep->calculate_score;
 
     my %score = $cpandep->score_by_dists;
@@ -174,13 +174,13 @@ B<Examples>
 Creates a new C<CPAN::Dependency> object with verbose mode enabled 
 and adds a few "big" modules to the process list:
 
-    my $cpandeps = new CPAN::Dependency verbose => 1, 
+    my $cpandep = new CPAN::Dependency verbose => 1, 
             process => [qw(WWW::Mechanize Maypole Template CPAN::Search::Lite)]
 
 Creates a new C<CPAN::Dependency> object with verbose mode enabled 
 and adds all the distributions from the CPAN to the process list: 
 
-    my $cpandeps = new CPAN::Dependency verbose => 1, process => ALL_CPAN;
+    my $cpandep = new CPAN::Dependency verbose => 1, process => ALL_CPAN;
 
 =cut
 
@@ -367,7 +367,7 @@ sub run {
         }
         
         # if not, we must try harder
-        unless(defined $deps and keys %$deps) {
+        unless(defined $deps and ref $deps eq 'HASH' and keys %$deps) {
             $self->_vprint("  >> $BOLD${YELLOW}no META.yml; using parsing method$RESET\n");
 
             # distribution uses Makefile.PL
@@ -378,7 +378,11 @@ sub run {
                         (?: requires\(([^)]*)\))               # Module::Install
                     /sx;
                 my $requires = $1 || $2;
-                eval "{ no strict; \$deps = { $requires \n} }";
+                if(not defined $requires) {
+                    $self->_vprint("  >> $BOLD??{YELLOW}don't know how to figure out prereqs from Makefile.PL for $where$RESET\n");
+                } else {
+                    eval "{ no strict; \$deps = { $requires \n} }";
+                }
 
             # distribution uses Build.PL
             } elsif(-f File::Spec->catfile($where, 'Build.PL')) {
@@ -560,7 +564,7 @@ sub load_deps_tree {
 =item load_cpants_db()
 
 Loads the prerequisites information from the given CPANTS database. 
-Expect one of the following options. 
+Expects one of the following options. 
 
 B<Options>
 
@@ -583,13 +587,14 @@ sub load_cpants_db {
     carp "error: No argument given to function load_cpants_db()" and return unless @_;
     my %args = @_;
     my $cpants_db = $args{file};
-    my $dbh = DBI->connect("dbi:SQLite2:dbname=$cpants_db", '', '')
+    -f $cpants_db or croak "fatal: Can't find file '$cpants_db'";
+    my $dbh = DBI->connect("dbi:SQLite:dbname=$cpants_db", '', '')
       or croak "fatal: Can't read SQLite database: $DBI::errstr";
 
     my $dists_sth = $dbh->prepare(q{
-        SELECT dist.dist, dist.dist_without_version, authors.cpanid, authors.author 
-        FROM dist, authors 
-        WHERE authors.cpanid=dist.author
+        SELECT dist.dist, dist.dist_without_version, author.pauseid, author.name
+        FROM dist, author
+        WHERE author.pauseid=dist.author
     });
 
     my $prereqs_sth = $dbh->prepare('SELECT requires FROM prereq WHERE dist=?');
@@ -804,6 +809,15 @@ cases where one author releases a horde of modules which depend upon
 each others. 
 
 
+=head1 PROCESSING NOTES
+
+C<CPAN::Dependency> uses C<CPANPLUS> when processing CPAN distributions, 
+which means that you need to configure CPANPLUS for the account that will 
+run the C<CPAN::Dependency> based scripts. Simply execute the C<cpanp(1)> 
+for this. If the account is not supposed to have access to the Internet, 
+use a mini-CPAN mirror. See also L<"Local mirror">. 
+
+
 =head1 SPEED TIPS
 
 Here are a few tips to speed up the processing when you want to process 
@@ -840,13 +854,13 @@ cpanplus is assumed to be the user that will executes this module.
 
 =item *
 
-Create a ramdisk of S<24 MB>: 
+Create a ramdisk of S<32 MB>: 
 
-    dd if=/dev/zero of=/dev/ram0 bs=1M count=24
+    dd if=/dev/zero of=/dev/ram0 bs=1M count=32
 
 =item *
 
-Format it and creates and Ext2 filesystem: 
+Format it and creates an Ext2 filesystem: 
 
     mke2fs -L ramdisk0 /dev/ram0
 
@@ -864,8 +878,8 @@ Now mount it:
 Now, as the user cpanplus, move the build directory onto the ramdisk 
 and symlink it: 
 
-    mv .cpanplus/5.8.5 /mnt/ramdisk/maddingue/
-    ln -s /mnt/ramdisk/maddingue/5.8.5 .cpanplus/5.8.5
+    mv .cpanplus/5.8.5 /mnt/ramdisk/cpanplus/
+    ln -s /mnt/ramdisk/cpanplus/5.8.5 .cpanplus/5.8.5
 
 =back
 
@@ -903,15 +917,26 @@ as given for Linux.
 
 B<(F)> C<CPANPLUS::Backend> was unable to create and return a new object. 
 
+=item Can't find file '%s'
+
+B<(F)> The file given in argument could not be found. 
+
+=item Can't read SQLite database: %s
+
+B<(F)> The SQLite database could not be read by the DBI driver. 
+Details follow. The message "file is encrypted or is not a database(1)" 
+usually means that the is not an SQLite database or not in a version 
+handled by the available C<DBD::SQLite> module. 
+
 =item No argument given to attribute %s
 
-B<(W)> As the message implies, you didn't supply the expected argument 
-to the attribute. 
+B<(W)> As the message implies, you didn't supply the expected argument to 
+the attribute. 
 
 =item No argument given to function %s
 
-B<(W)> As the message implies, you didn't supply the expected arguments 
-to the function. 
+B<(W)> As the message implies, you didn't supply the expected arguments to 
+the function. 
 
 =item Unknown option '%s': ignoring
 
@@ -924,8 +949,12 @@ B<(W)> You gave to C<new()> an unknown attribute name.
 
 L<CPANPLUS::Backend>
 
-The CPANTS web site at L<http://http://cpants.dev.zsi.at/>, where the 
-CPANTS database can be downloaded. 
+The CPANTS web site at L<http://cpants.perl.org/>, where the CPANTS 
+database can be downloaded. 
+
+L<CPAN::Mini>
+
+L<CPAN::Mini::Inject>
 
 
 =head1 AUTHOR

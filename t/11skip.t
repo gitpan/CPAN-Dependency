@@ -1,9 +1,12 @@
 use strict;
 use Test::More;
-use Test::Deep;
+BEGIN {
+  eval "use Test::Deep";
+  plan skip_all => "Test::Deep required for this test" if $@;
+  plan tests => 29;
+}
 use File::Temp qw(:POSIX);
 use YAML qw(LoadFile);
-BEGIN { plan tests => 29 }
 use CPAN::Dependency;
 
 # create an object

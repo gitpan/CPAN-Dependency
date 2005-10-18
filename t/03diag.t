@@ -1,7 +1,10 @@
 use strict;
 use Test::More;
-use Test::Warn;
-BEGIN { plan tests => 10 }
+BEGIN {
+  eval "use Test::Warn";
+  plan skip_all => "Test::Warn required for testing warnings" if $@;
+  plan tests => 10;
+}
 use CPAN::Dependency;
 
 # create an object
