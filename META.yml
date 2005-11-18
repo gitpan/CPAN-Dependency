@@ -1,6 +1,6 @@
 ---
 name: CPAN-Dependency
-version: 0.09
+version: 0.10
 author:
   - Sébastien Aperghis-Tramoni <sebastien@aperghis.net>
 abstract: Analyzes CPAN modules and generates their dependency tree
@@ -20,5 +20,5 @@ build_requires:
 provides:
   CPAN::Dependency:
     file: lib/CPAN/Dependency.pm
-    version: 0.09
+    version: 0.10
 generated_by: Module::Build version 0.2611

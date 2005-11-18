@@ -14,7 +14,7 @@ require Exporter;
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.09';
+  $VERSION = '0.10';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -27,7 +27,7 @@ CPAN::Dependency - Analyzes CPAN modules and generates their dependency tree
 
 =head1 VERSION
 
-Version 0.09
+Version 0.10
 
 =head1 SYNOPSIS
 
@@ -458,7 +458,7 @@ sub run {
 
 =item calculate_score()
 
-Calculate the score of each distribution by walking throught the 
+Calculate the score of each distribution by walking through the 
 dependency tree. 
 
 =cut
@@ -466,7 +466,7 @@ dependency tree.
 sub calculate_score {
     my $self = shift;
     
-    # now walk throught the prereqs tree
+    # now walk through the prereqs tree
     for my $dist (keys %{$self->{prereqs}}) {
         $self->_tree_walk($dist, 1);
     }
@@ -643,7 +643,7 @@ sub load_cpants_db {
 
 =item _tree_walk()
 
-Walks throught the dependency tree and updates the score of each distribution. 
+Walks through the dependency tree and updates the score of each distribution. 
 See L<"SCORE CALCULATION">.
 
 =cut
@@ -712,7 +712,7 @@ sub _vprintf {
 
 Control whether to delete the CPANPLUS build directory during the 
 processing of the selected modules or not. 
-This is a quite agreessive method to clean up things, but it's needed 
+This is a quite aggressive method to clean up things, but it's needed 
 when processing the whole CPAN because some distributions are badly 
 made, and some may be just too big for a ramdisk. 
 Default to false (0). 
@@ -794,7 +794,7 @@ S< >S< >for each prerequisite I<P> of this distribution
 
 =item 3
 
-S< >S< >S< >S< >if both I<D> and I<P> are not made by the same auhor, 
+S< >S< >S< >S< >if both I<D> and I<P> are not made by the same author, 
 update the score of I<P> by adding it the current dependency depth
 
 =item 4
@@ -842,7 +842,7 @@ For more information see L<CPAN::Mini> and L<CPAN::Mini::Inject>.
 
 If your system supports this feature (most modern systems do), you should 
 create a ramdisk and move the C<CPANPLUS> build directory onto the ramdisk. 
-Here are the instructions for Linux. Other systems are left as an exercice 
+Here are the instructions for Linux. Other systems are left as an exercise 
 for the reader C<:-)>
 
 =head3 Ramdisk for Linux
@@ -888,17 +888,17 @@ directory because it will grow really big during the processing:
 some C<CPANPLUS> cache files are already big, and the sub-directory 
 F<author/> will contain a copy of each processed archive. When processing 
 the whole CPAN, it means that you'll have here a complete copy of your 
-mini-CPAN, so be sure that you have enought disk space (or symlink 
-this directory as well to another volume when you have enought space). 
+mini-CPAN, so be sure that you have enough disk space (or symlink 
+this directory as well to another volume when you have enough space). 
 
 =head3 Ramdisk for Mac OS X
 
 Here is a small shell script that creates, format and mount a ramdisk 
-of S<32 MB>. Its size can be changed by changing the number of blocks, 
+of S<64 MB>. Its size can be changed by changing the number of blocks, 
 where one block is S<512 bytes>. 
 
     #!/bin/sh
-    BLOCK=64000
+    BLOCK=128000
     dev=`hdid -nomount ram://$BLOCKS`
     newfs_hfs -v RAMDisk $dev
     mkdir /Volumes/RAMDisk
@@ -907,6 +907,97 @@ where one block is S<512 bytes>.
 
 Then follow the same instructions for moving the F<build/> directory 
 as given for Linux. 
+
+=head3 Ramdisk for Solaris
+
+Beginning with Solaris 9 12/03, Solaris includes a C<ramdiskadm(1M)> 
+command for managing ramdisks. Below are the links for the documentation 
+of that command. 
+
+=over 4
+
+=item *
+
+Solaris 10: 
+C<ramdiskadm(1M)> (L<http://docs.sun.com/app/docs/doc/816-5166/6mbb1kqcv?a=view>)
+
+=item *
+
+Solaris 9 12/03: 
+C<ramdiskadm(1M)> (L<http://docs.sun.com/app/docs/doc/817-0690/6mgflntjs?a=view>)
+
+=back
+
+Ramdisks can also be created in previous versions of Solaris using 
+a pseudo-device. Below are the links for the corresponding documentation. 
+
+=over 4
+
+=item *
+
+Solaris 10: 
+C<pseudo(4)> (L<http://docs.sun.com/app/docs/doc/816-5177/6mbbc4g9a?a=view>), 
+C<ramdisk(ramdisk(7D))> (L<http://docs.sun.com/app/docs/doc/816-5174/6mbb98uit?a=view>)
+
+=item *
+
+Solaris 9: 
+C<pseudo(4)> (L<http://docs.sun.com/app/docs/doc/816-0219/6m6njqbbc?a=view>)
+
+=item *
+
+Solaris 8: 
+C<pseudo(4)> (L<http://docs.sun.com/app/docs/doc/806-0633/6j9vn6q6i?a=view>)
+
+=item *
+
+Solaris 7: 
+C<pseudo(4)> (L<http://docs.sun.com/app/docs/doc/805-3176/6j31fl7m3?a=view>)
+
+=item *
+
+Solaris 2.6: 
+C<pseudo(4)> (L<http://docs.sun.com/app/docs/doc/802-5747-04/6i9g1bpsr?a=view>)
+
+=back
+
+=head3 Ramdisk for FreeBSD
+
+Based on L<http://freebsdwiki.net/index.php/RAMdisks,_creating_under_FreeBSD_5.x>, 
+the following commands should create a 256 megabytes ramdisk under S<FreeBSD 5.x>. 
+
+    /sbin/mdconfig -a -t malloc -s 256M -u 10
+    /sbin/newfs -U /dev/md10
+    /sbin/mount /dev/md10 /mnt/ramdisk
+
+The equivalent script using C<vnconfig(8)> for S<FreeBSD 4.x> is left as an 
+exercise for the reader. 
+
+
+=head3 Ramdisk for Windows
+
+It seems there is no built-in mechanism or tool for creating a ramdisk under 
+Windows, but the following links give a few ways to do so. 
+
+=over 4
+
+=item *
+
+Microsoft C<Ramdisk.sys> for Windows 2000: L<http://support.microsoft.com/?id=257405>
+
+=item *
+
+AR Soft RAMDisk (free): L<http://www.arsoft-online.com/>
+
+=item *
+
+Cenatek RAMDisk (commercial): L<http://www.cenatek.com/product_ramdisk.cfm>
+
+=item *
+
+SuperSeed RamDisk (commercial): L<http://www.superspeed.com/ramdisk.html>
+
+=back
 
 
 =head1 DIAGNOSTICS

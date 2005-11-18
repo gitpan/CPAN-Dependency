@@ -1,5 +1,9 @@
 Revision history for CPAN-Dependency
 
+0.10    2005.11.18
+        [DOC] Corrected a few typos thanks to Test::Spelling.
+        [DOC] Added information on how to create ramdisk for Solaris, FreeBSD and Windows. 
+
 0.09    2005.10.18
         [BUGFIX] RT#15093 (David Landgren): Applied patch to handle new CPANTS database 
         (now in SQLite3 format).
