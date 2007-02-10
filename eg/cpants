@@ -5,8 +5,11 @@ use CPAN::Dependency;
 my $file = shift || 'cpants.db';
 
 my $cpandep = new CPAN::Dependency;
+print "loading $file...\n";
 $cpandep->load_cpants_db(file => $file);
+print "calculating score...\n";
 $cpandep->calculate_score;
+print "saving YAML file...\n";
 $cpandep->save_deps_tree(file => 'deps.yml');
 
 my %score = $cpandep->score_by_dists;

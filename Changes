@@ -1,5 +1,8 @@
 Revision history for CPAN-Dependency
 
+0.11    2007.02.10
+        [TESTS] CPAN-RT#24707: Fixed t/10process.t
+
 0.10    2005.11.18
         [DOC] Corrected a few typos thanks to Test::Spelling.
         [DOC] Added information on how to create ramdisk for Solaris, FreeBSD and Windows. 

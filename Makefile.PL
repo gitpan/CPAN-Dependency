@@ -4,6 +4,7 @@ eval 'use ExtUtils::MakeMaker::Coverage';
 
 WriteMakefile(
     NAME                => 'CPAN::Dependency',
+    LICENSE             => 'perl',
     AUTHOR              => 'Sébastien Aperghis-Tramoni <sebastien@aperghis.net>',
     VERSION_FROM        => 'lib/CPAN/Dependency.pm',
     ABSTRACT_FROM       => 'lib/CPAN/Dependency.pm',
@@ -13,7 +14,7 @@ WriteMakefile(
         'DBD::SQLite' => 0,
         'File::Slurp' => 0,
         'File::Spec' => 0,
-        'Module::CoreList' => 0,
+        'Module::CoreList' => '2.09',
         'Test::More' => 0,
         'YAML' => 0,
     },

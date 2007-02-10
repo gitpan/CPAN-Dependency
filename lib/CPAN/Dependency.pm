@@ -3,8 +3,6 @@ use strict;
 use Carp;
 use CPANPLUS::Backend;
 use Cwd;
-use DBI;
-use DBD::SQLite;
 use File::Spec;
 use File::Slurp;
 use Module::CoreList;
@@ -14,7 +12,7 @@ require Exporter;
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.10';
+  $VERSION = '0.11';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -27,7 +25,7 @@ CPAN::Dependency - Analyzes CPAN modules and generates their dependency tree
 
 =head1 VERSION
 
-Version 0.10
+Version 0.11
 
 =head1 SYNOPSIS
 
@@ -379,7 +377,7 @@ sub run {
                     /sx;
                 my $requires = $1 || $2;
                 if(not defined $requires) {
-                    $self->_vprint("  >> $BOLD??{YELLOW}don't know how to figure out prereqs from Makefile.PL for $where$RESET\n");
+                    $self->_vprint("  >> $BOLD${YELLOW}don't know how to figure out prereqs from Makefile.PL for $where$RESET\n");
                 } else {
                     eval "{ no strict; \$deps = { $requires \n} }";
                 }
@@ -563,6 +561,8 @@ sub load_deps_tree {
 
 =item load_cpants_db()
 
+B<CPANTS support is currently broken.>
+
 Loads the prerequisites information from the given CPANTS database. 
 Expects one of the following options. 
 
@@ -588,13 +588,16 @@ sub load_cpants_db {
     my %args = @_;
     my $cpants_db = $args{file};
     -f $cpants_db or croak "fatal: Can't find file '$cpants_db'";
+
+    eval 'use DBI';
+
     my $dbh = DBI->connect("dbi:SQLite:dbname=$cpants_db", '', '')
       or croak "fatal: Can't read SQLite database: $DBI::errstr";
 
     my $dists_sth = $dbh->prepare(q{
         SELECT dist.dist, dist.dist_without_version, author.pauseid, author.name
         FROM dist, author
-        WHERE author.pauseid=dist.author
+        WHERE author.id=dist.author
     });
 
     my $prereqs_sth = $dbh->prepare('SELECT requires FROM prereq WHERE dist=?');
@@ -610,7 +613,7 @@ sub load_cpants_db {
         my $prereqs = $prereqs_sth->fetchall_arrayref;
         my @prereqs = ();
         push @prereqs, map { @$_ } @$prereqs;
-        
+
         my %deps = ();
         for my $reqmod (@prereqs) {
             $reqmod =~ s/^\s+//g; $reqmod =~ s/\s+$//g;
@@ -621,7 +624,7 @@ sub load_cpants_db {
             next if $reqdist->package_is_perl_core;
             $deps{$reqdist->package_name} = $reqdist->author->cpanid ne $distinfo[2] ? 1 : 0;
 	    }
-        
+
         $self->{prereqs}{$distinfo[1]} = {
             prereqs => { %deps }, 
             used_by => { }, 
@@ -630,7 +633,7 @@ sub load_cpants_db {
             author => $distinfo[3] || eval { $dist_cpan_info->author->author }, 
         };
     }
-    
+
     $dbh->disconnect;
 }
 

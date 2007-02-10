@@ -1,31 +1,19 @@
 use strict;
 use Test::More;
-BEGIN {
-  eval "use Test::Deep";
-  plan skip_all => "Test::Deep required for this test" if $@;
-  plan tests => 88;
-}
 use File::Temp qw(:POSIX);
 use YAML qw(LoadFile);
 use CPAN::Dependency;
 
-# create an object
-my $cpandep = undef;
-eval { $cpandep = new CPAN::Dependency };
-is( $@, ''                                  , "object created"               );
-ok( defined $cpandep                        , "object is defined"            );
-ok( $cpandep->isa('CPAN::Dependency')       , "object is of expected type"   );
-is( ref $cpandep, 'CPAN::Dependency'        , "object is of expected ref"    );
+plan skip_all => "Test::Deep required for this test" unless eval 'use Test::Deep; 1';
 
-# Checking that the whole thing works as expected. We'll ask the dependencies 
-# of several distributions then check that the information are what we know
+# know dependencies
 my @mods = qw(
     WWW::Mechanize  Maypole  Template  CPAN::Search::Lite  Net::Pcap  SVK  Test::Class
 );
 my %dists = (
     'WWW::Mechanize' => 'WWW-Mechanize', 
     'Maypole' => 'Maypole', 
-    'Template' => 'Template-Toolki', 
+    'Template' => 'Template-Toolkit', 
     'CPAN::Search::Lite' => 'CPAN-Search-Lite', 
     'Net::Pcap' => 'Net-Pcap', 
     'SVK' => 'SVK', 
@@ -37,20 +25,22 @@ my %prereqs = (
         cpanid => 'RKOBES', 
         prereqs => {
             'AI-Categorizer' => 1, 
-            'Archive-Tar' => 1, 
+            'Apache2-SOAP' => 0, 
+            #'Archive-Tar' => 1,    # core since 5.9.3
             'Archive-Zip' => 1, 
             'CPAN-DistnameInfo' => 1, 
             'Config-IniFiles' => 1, 
             'DBD-mysql' => 1, 
-            #'File-Temp' => 1, 
-            'IO-Zlib' => 1, 
+            #'File-Temp' => 1,      # core since 5.6.1
+            #'IO-Zlib' => 1,        # core since 5.9.3
             'Lingua-Stem' => 1, 
             'Lingua-StopWords' => 1, 
             #'PathTools' => 1, 
             'Perl-Tidy' => 1, 
             #'Pod-Parser' => 1, 
-            'Sort-Versions' => 1, 
-            'XML-Parser' => 1, 
+            'Pod-Xhtml' => 1, 
+            'SOAP-Lite' => 1, 
+            'XML-SAX-ExpatXS' => 1, 
             'YAML' => 1, 
             'libwww-perl' => 1, 
             'txt2html' => 1, 
@@ -62,17 +52,23 @@ my %prereqs = (
         author => 'Aaron James Trevena', 
         cpanid => 'TEEJAY', 
         prereqs => {
-            'Cgi-Simple' => 1, 
+            'CGI-Simple' => 1, 
             'CGI-Untaint' => 1, 
+            'CGI-Untaint-date' => 1, 
+            'CGI-Untaint-email' => 1, 
             'Class-DBI' => 1, 
             'Class-DBI-AbstractSearch' => 1, 
-            'Class-DBI-AsForm' => 1, 
-            'Class-DBI-FromCGI' => 1, 
             'Class-DBI-Loader' => 1, 
             'Class-DBI-Loader-Relationship' => 1, 
             'Class-DBI-Pager' => 1, 
             'Class-DBI-Plugin-RetrieveAll' => 1, 
+            'Class-DBI-Plugin-Type' => 1, 
             'Class-DBI-SQLite' => 1, 
+            'Class-DBI-SQLite' => 1, 
+            'File-MMagic-XS' => 1, 
+            #'Digest-MD5' => 1,         # core since 5.7.3
+            'HTML-Tree' => 1, 
+            'HTTP-Body' => 1, 
             'Template-Plugin-Class' => 1, 
             'Template-Toolkit' => 1, 
             'Test-MockModule' => 1, 
@@ -87,7 +83,9 @@ my %prereqs = (
     'Net-Pcap' => {
         author => 'Sebastien Aperghis-Tramoni', 
         cpanid => 'SAPER', 
-        prereqs => {}, 
+        prereqs => {
+            'IO-Interface' => 1, 
+        }, 
         used_by => ignore(), 
         score => 0, 
     }, 
@@ -97,23 +95,30 @@ my %prereqs = (
         prereqs => {
             'Algorithm-Annotate' => 0, 
             'Algorithm-Diff' => 1, 
+            'App-CLI' => 0, 
             'Class-Autouse' => 1, 
-            'Clone' => 1, 
+            'Class-Accessor' => 1, 
+            'Class-Data-Inheritable' => 1, 
             'Data-Hierarchy' => 0, 
-            #'File-Temp' => 1, 
-            'File-Type' => 1, 
+            #'Encode' => 1,             # core since 5.7.3
+            #'File-Temp' => 1,          # core since 5.6.1
             'IO-Digest' => 0, 
+            #'Getopt-Long' => 1,        # core since 5.000
+            'List-MoreUtils' => 1, 
+            'Path-Class' => 1, 
             'PerlIO-eol' => 1, 
             'PerlIO-via-dynamic' => 0, 
             'PerlIO-via-symlink' => 0, 
-            'Pod-Escapes' => 1, 
-            'Pod-Simple' => 1, 
-            'Regexp-Shellish' => 1, 
-            #'SVN-Mirror' => 0, 
+            #'Pod-Escapes' => 1,        # core since 5.9.3
+            #'Pod-Simple' => 1,         # core since 5.9.3
+            'SVN-Mirror' => 0,          # third-party module
             'SVN-Simple' => 0, 
-            'TimeDate' => 1, 
+            'TermReadKey' => 1, 
+            #'Time-HiRes' => 1,         # core since 5.7.3
+            'UNIVERSAL-require' => 1, 
             'URI' => 1, 
-            'YAML' => 1, 
+            'YAML-Syck' => 1, 
+            #'version' => 1,            # core since 5.9
         }, 
         used_by => ignore(), 
         score => 0, 
@@ -121,7 +126,10 @@ my %prereqs = (
     'Test-Class' => {
         author => 'Adrian Howard', 
         cpanid => 'ADIE', 
-        prereqs => {}, 
+        prereqs => {
+            'Devel-Symdump' => 1, 
+            'Test-Exception' => 0, 
+        }, 
         used_by => ignore(), 
         score => 0, 
     }, 
@@ -129,7 +137,8 @@ my %prereqs = (
         author => 'Andy Wardley', 
         cpanid => 'ABW', 
         prereqs => {
-            'AppConfig' => 0, 
+            'AppConfig' => 1, 
+            'File-HomeDir' => 1, 
             #'PathTools' => 1, 
         }, 
         used_by => ignore(), 
@@ -152,6 +161,29 @@ my %prereqs = (
     }, 
 );
 
+# test plan
+my @all = ( values(%dists), map { keys %{ $prereqs{$_}{prereqs} } } keys %prereqs );
+@all = do { my %uniq; @uniq{@all} = (); keys %uniq };
+
+plan tests => 
+        4               # object creation
+        + 2 * @mods     # dependencies checking
+        + 4 + @all      # score checking
+        + 3             # saving data on disk
+        + 7             # loading save data from disk
+;
+
+
+# create an object
+my $cpandep = undef;
+eval { $cpandep = new CPAN::Dependency };
+is( $@, ''                                  , "object created"               );
+ok( defined $cpandep                        , "object is defined"            );
+ok( $cpandep->isa('CPAN::Dependency')       , "object is of expected type"   );
+is( ref $cpandep, 'CPAN::Dependency'        , "object is of expected ref"    );
+
+# checking that the whole thing works as expected: we'll ask the dependencies 
+# of several distributions then check that the information are what we expect
 $cpandep->verbose(0);
 $cpandep->debug(0);
 
