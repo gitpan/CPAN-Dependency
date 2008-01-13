@@ -1,11 +1,14 @@
 use strict;
 use Test::More;
+
+
 BEGIN {
-  eval "use Test::Warn";
-  plan skip_all => "Test::Warn required for testing warnings" if $@;
-  plan tests => 10;
+    plan skip_all => "Test::Warn required for testing warnings"
+        unless eval "use Test::Warn; 1";
 }
-use CPAN::Dependency;
+eval "use CPAN::Dependency";
+
+plan tests => 10;
 
 # create an object
 my $cpandep = undef;

@@ -1,18 +1,19 @@
 package CPAN::Dependency;
 use strict;
+use warnings;
 use Carp;
 use CPANPLUS::Backend;
 use Cwd;
+use Exporter ();
 use File::Spec;
 use File::Slurp;
 use Module::CoreList;
 use YAML qw(LoadFile DumpFile);
-require Exporter;
 
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.11';
+  $VERSION = '0.12';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -25,7 +26,7 @@ CPAN::Dependency - Analyzes CPAN modules and generates their dependency tree
 
 =head1 VERSION
 
-Version 0.11
+Version 0.12
 
 =head1 SYNOPSIS
 
@@ -1041,10 +1042,25 @@ B<(W)> You gave to C<new()> an unknown attribute name.
 
 =head1 SEE ALSO
 
-L<CPANPLUS::Backend>
+=head2 Similar modules
 
-The CPANTS web site at L<http://cpants.perl.org/>, where the CPANTS 
-database can be downloaded. 
+C<CPAN::dependency> was more a experiment at a given time, and there are now
+more recent modules on the CPAN in the same field, but with more features:
+
+L<CPAN::FindDependencies> - Find dependencies for modules on the CPAN
+
+The CPANTS modules: L<Module::CPANTS::Analyse>, L<Module::CPANTS::ProcessCPAN>
+(see also L<http://cpants.perl.org/>)
+
+L<Module::Dependency> - Find generic dependencies for Perl programs and modules
+(not restricted to the CPAN)
+
+L<Graph::Dependency> - Generate dependency graphs and reports
+
+
+=head2 Related modules
+
+L<CPANPLUS::Backend>
 
 L<CPAN::Mini>
 

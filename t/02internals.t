@@ -1,8 +1,9 @@
 use strict;
 use Test::More;
-use Test::Deep;
-BEGIN { plan tests => 53 }
 use CPAN::Dependency;
+
+
+plan tests => 53;
 
 # create an object
 my $cpandep = undef;
@@ -29,20 +30,20 @@ for my $option (qw(clean_build_dir color debug prefer_bin verbose)) {
 # check that process() works
 my @mods = qw(WWW::Mechanize Maypole Template CPAN::Search::Lite);
 $cpandep->process(@mods[0,1]);
-cmp_deeply( $cpandep->{process}, [@mods[0,1]] , "calling process() with two args as list" );
+is_deeply( $cpandep->{process}, [@mods[0,1]] , "calling process() with two args as list" );
 $cpandep->process([@mods[2,3]]);
-cmp_deeply( $cpandep->{process}, [@mods]      , "calling process() with two args as arrayref" );
+is_deeply( $cpandep->{process}, [@mods]      , "calling process() with two args as arrayref" );
 
 # check that skip() works (note: skip() accepts module or distribution 
 # names but only stores distribution names)
 $cpandep->{skip} = {};
 my @skip_list = qw(LWP::UserAgent     Net::SSLeay           CGI            Net-Pcap      );
-my %expected1 = ('libwww-perl' => 1, 'Net_SSLeay.pm' => 1                                );
-my %expected2 = ( %expected1                             , 'CGI.pm' => 1, 'Net-Pcap' => 1);
+my %expected1 = ('libwww-perl' => 1, 'Net-SSLeay' => 1                                   );
+my %expected2 = ( %expected1                             , 'CGI' => 1,    'Net-Pcap' => 1);
 $cpandep->skip(@skip_list[0,1]);
-cmp_deeply( $cpandep->{skip}, \%expected1 , "calling skip() with two args as list" );
+is_deeply( $cpandep->{skip}, \%expected1 , "calling skip() with two args as list" );
 $cpandep->skip([@skip_list[2,3]]);
-cmp_deeply( $cpandep->{skip}, \%expected2 , "calling skip() with two args as arrayref" );
+is_deeply( $cpandep->{skip}, \%expected2 , "calling skip() with two args as arrayref" );
 
 # now checking that creating an object by passing options to new()
 # works as expected
@@ -72,7 +73,7 @@ is( $@, ''                                  , "object created (passing a list of
 ok( defined $cpandep                        , "object is defined"            );
 ok( $cpandep->isa('CPAN::Dependency')       , "object is of expected type"   );
 is( ref $cpandep, 'CPAN::Dependency'        , "object is of expected ref"    );
-cmp_deeply( $cpandep->{process}, [@mods]    , "checking process() with two args as arrayref" );
+is_deeply( $cpandep->{process}, [@mods]    , "checking process() with two args as arrayref" );
 
 $cpandep = undef;
 eval { $cpandep = new CPAN::Dependency skip => [ @skip_list ] };

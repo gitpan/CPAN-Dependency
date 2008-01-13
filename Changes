@@ -1,5 +1,13 @@
 Revision history for CPAN-Dependency
 
+0.12    2008.01.13
+        [DIST] Fixed missing prereqs in Makefile.PL. Updated required versions 
+        in Makefile.PL and Build.PL.
+        [TESTS] Modified t/02internals.t, t/03diag.t, t/10process.t, t/11skip.t
+        to speed up when skipping and to prevent them from crashing when executed
+        on smoke boxes.
+        [DOC] Added links to similar modules.
+
 0.11    2007.02.10
         [TESTS] CPAN-RT#24707: Fixed t/10process.t
 

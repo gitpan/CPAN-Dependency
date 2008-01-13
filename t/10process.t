@@ -1,12 +1,14 @@
 use strict;
 use Test::More;
-use File::Temp qw(:POSIX);
-use YAML qw(LoadFile);
-use CPAN::Dependency;
 
-plan skip_all => "Test::Deep required for this test" unless eval 'use Test::Deep; 1';
+plan skip_all => "Only useful to the author" unless -d "releases";
+plan skip_all => "Test::Deep required for this test" unless eval "use Test::Deep; 1";
+eval "use File::Temp qw(:POSIX)";
+eval "use YAML qw(LoadFile)";
+eval "use CPAN::Dependency";
 
-# know dependencies
+
+# known dependencies
 my @mods = qw(
     WWW::Mechanize  Maypole  Template  CPAN::Search::Lite  Net::Pcap  SVK  Test::Class
 );
@@ -75,7 +77,6 @@ my %prereqs = (
             'UNIVERSAL-moniker' => 1, 
             'UNIVERSAL-require' => 1, 
             'URI' => 1, 
-            'libwww-perl' => 1, 
         }, 
         used_by => ignore(), 
         score => 0, 
@@ -83,9 +84,7 @@ my %prereqs = (
     'Net-Pcap' => {
         author => 'Sebastien Aperghis-Tramoni', 
         cpanid => 'SAPER', 
-        prereqs => {
-            'IO-Interface' => 1, 
-        }, 
+        prereqs => {}, 
         used_by => ignore(), 
         score => 0, 
     }, 
@@ -137,7 +136,7 @@ my %prereqs = (
         author => 'Andy Wardley', 
         cpanid => 'ABW', 
         prereqs => {
-            'AppConfig' => 1, 
+            'AppConfig' => 0, 
             'File-HomeDir' => 1, 
             #'PathTools' => 1, 
         }, 
@@ -153,7 +152,6 @@ my %prereqs = (
             'HTML-Parser' => 1, 
             #'Pod-Parser' => 1, 
             #'Test-Simple' => 1, 
-            'Test-LongString' => 1, 
             'URI' => 1, 
         }, 
         used_by => ignore(), 
@@ -201,7 +199,7 @@ is( $@, '', "calculate_score()" );
 
 #is( $cpandep->deps_by_dists->{'Test-Simple'}{score}, '1', "score of Test-Simple" );
 is( $cpandep->deps_by_dists->{'URI'        }{score}, '3', "score of URI" );
-is( $cpandep->deps_by_dists->{'libwww-perl'}{score}, '3', "score of libwww-perl" );
+is( $cpandep->deps_by_dists->{'libwww-perl'}{score}, '2', "score of libwww-perl" );
 
 my %score = ();
 eval { %score = $cpandep->score_by_dists };

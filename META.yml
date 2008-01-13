@@ -1,6 +1,6 @@
 ---
 name: CPAN-Dependency
-version: 0.11
+version: 0.12
 author:
   - 'Sébastien Aperghis-Tramoni <sebastien@aperghis.net>'
 abstract: Analyzes CPAN modules and generates their dependency tree
@@ -8,13 +8,13 @@ license: perl
 resources:
   license: http://dev.perl.org/licenses/
 requires:
-  CPANPLUS: 0.053
-  DBD::SQLite: 0
+  CPANPLUS: 0.82
+  DBD::SQLite: 1.0
   DBI: 1.0
-  File::Slurp: 0
+  File::Slurp: 9999.12
   File::Spec: 0
-  Module::CoreList: 2.09
-  YAML: 0
+  Module::CoreList: 2.12
+  YAML: 0.66
 build_requires:
   Test::Deep: 0
   Test::More: 0
@@ -22,8 +22,8 @@ build_requires:
 provides:
   CPAN::Dependency:
     file: lib/CPAN/Dependency.pm
-    version: 0.11
-generated_by: Module::Build version 0.2806
+    version: 0.12
+generated_by: Module::Build version 0.2808
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2
