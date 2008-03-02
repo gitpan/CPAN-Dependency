@@ -34,18 +34,22 @@ my %dists = (
 );
 map { $dists{$_} = 'perl' } @core;
 
-# check that bundles are correctly skipped
-$cpandep->process(@bundles);
-$cpandep->run;
-for my $dist (@dists{@bundles}) {
-    ok( not exists $cpandep->{prereqs}{$dist} );
+SKIP: {
+    my $mirror_access = $cpandep->{backend}->configure_object->get_conf("hosts")->[0]{scheme};
+    skip "CPANPLUS not configured to use a local mirror", @core + @dists{@bundles}
+        unless $mirror_access eq "file";
+
+    # check that bundles are correctly skipped
+    $cpandep->process(@bundles);
+    $cpandep->run;
+    for my $dist (@dists{@bundles}) {
+        ok( not exists $cpandep->{prereqs}{$dist} );
+    }
+    
+    # check that core modules are correctly skipped
+    $cpandep->process(@core);
+    $cpandep->run;
+    for my $mod (@core) {
+        ok( not exists $cpandep->{prereqs}{$dists{$mod}} );
+    }
 }
-
-
-# check that core modules are correctly skipped
-$cpandep->process(@core);
-$cpandep->run;
-for my $mod (@core) {
-    ok( not exists $cpandep->{prereqs}{$dists{$mod}} );
-}
-
