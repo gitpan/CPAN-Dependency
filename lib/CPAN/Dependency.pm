@@ -13,7 +13,7 @@ use YAML qw(LoadFile DumpFile);
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.13';
+  $VERSION = '0.14';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -26,7 +26,7 @@ CPAN::Dependency - Analyzes CPAN modules and generates their dependency tree
 
 =head1 VERSION
 
-Version 0.13
+Version 0.14
 
 =head1 SYNOPSIS
 

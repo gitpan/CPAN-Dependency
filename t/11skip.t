@@ -3,11 +3,12 @@ use Test::More;
 
 
 plan skip_all => "Test::Deep required for this test" unless eval "use Test::Deep; 1";
+
+plan tests => 29;
+
 eval "use File::Temp qw(:POSIX)";
 eval "use YAML qw(LoadFile)";
 eval "use CPAN::Dependency";
-
-plan tests => 29;
 
 # create an object
 my $cpandep = undef;
@@ -36,7 +37,7 @@ map { $dists{$_} = 'perl' } @core;
 
 SKIP: {
     my $mirror_access = $cpandep->{backend}->configure_object->get_conf("hosts")->[0]{scheme};
-    skip "CPANPLUS not configured to use a local mirror", @core + @dists{@bundles}
+    skip "CPANPLUS not configured to use a local mirror", scalar(@core) + scalar(@dists{@bundles})
         unless $mirror_access eq "file";
 
     # check that bundles are correctly skipped
