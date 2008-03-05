@@ -1,5 +1,8 @@
 Revision history for CPAN-Dependency
 
+0.15    2008.03.05
+        [TESTS] Really fixing t/11skip.t
+
 0.14    2008.03.04
         [TESTS] Fixing t/11skip.t
 

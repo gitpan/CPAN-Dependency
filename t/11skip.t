@@ -4,20 +4,6 @@ use Test::More;
 
 plan skip_all => "Test::Deep required for this test" unless eval "use Test::Deep; 1";
 
-plan tests => 29;
-
-eval "use File::Temp qw(:POSIX)";
-eval "use YAML qw(LoadFile)";
-eval "use CPAN::Dependency";
-
-# create an object
-my $cpandep = undef;
-eval { $cpandep = new CPAN::Dependency };
-is( $@, ''                                  , "object created"               );
-ok( defined $cpandep                        , "object is defined"            );
-ok( $cpandep->isa('CPAN::Dependency')       , "object is of expected type"   );
-is( ref $cpandep, 'CPAN::Dependency'        , "object is of expected ref"    );
-
 my @bundles = qw(
     Bundle::CPANPLUS  Bundle::Math  Bundle::Net::LDAP  Bundle::Phalanx100
 );
@@ -35,9 +21,25 @@ my %dists = (
 );
 map { $dists{$_} = 'perl' } @core;
 
+my $nb_process_tests = @core + @bundles;
+
+plan tests => 4 + $nb_process_tests;
+
+eval "use File::Temp qw(:POSIX)";
+eval "use YAML qw(LoadFile)";
+eval "use CPAN::Dependency";
+
+# create an object
+my $cpandep = undef;
+eval { $cpandep = new CPAN::Dependency };
+is( $@, ''                                  , "object created"               );
+ok( defined $cpandep                        , "object is defined"            );
+ok( $cpandep->isa('CPAN::Dependency')       , "object is of expected type"   );
+is( ref $cpandep, 'CPAN::Dependency'        , "object is of expected ref"    );
+
 SKIP: {
     my $mirror_access = $cpandep->{backend}->configure_object->get_conf("hosts")->[0]{scheme};
-    skip "CPANPLUS not configured to use a local mirror", scalar(@core) + scalar(@dists{@bundles})
+    skip "CPANPLUS not configured to use a local mirror", $nb_process_tests
         unless $mirror_access eq "file";
 
     # check that bundles are correctly skipped
