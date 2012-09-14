@@ -13,7 +13,7 @@ use YAML qw(LoadFile DumpFile);
 use constant ALL_CPAN => 'all CPAN modules';
 
 { no strict;
-  $VERSION = '0.15';
+  $VERSION = '0.16';
   @ISA = qw(Exporter);
   @EXPORT = qw(ALL_CPAN);
 }
@@ -26,7 +26,7 @@ CPAN::Dependency - Analyzes CPAN modules and generates their dependency tree
 
 =head1 VERSION
 
-Version 0.15
+Version 0.16
 
 =head1 SYNOPSIS
 
@@ -61,7 +61,11 @@ from the CPANTS database.
         printf "%5d %s\n", $score{$dist}, $dist;
     }
 
+
 =head1 DESCRIPTION
+
+I<Please note that this module is no longer maintained.
+Check L<"See ALSO"> for similar, more recent modules.>
 
 This module can process a set of distributions, up to the whole CPAN, 
 and extract the dependency relations between these distributions. 
@@ -596,7 +600,7 @@ sub load_cpants_db {
       or croak "fatal: Can't read SQLite database: $DBI::errstr";
 
     my $dists_sth = $dbh->prepare(q{
-        SELECT dist.dist, dist.dist_without_version, author.pauseid, author.name
+        SELECT dist.id, dist.dist, author.pauseid, author.name
         FROM dist, author
         WHERE author.id=dist.author
     });
@@ -899,7 +903,13 @@ this directory as well to another volume when you have enough space).
 
 Here is a small shell script that creates, format and mount a ramdisk 
 of S<64 MB>. Its size can be changed by changing the number of blocks, 
-where one block is S<512 bytes>. 
+where one block is S<512 bytes>. This is a version for OS X.5 and newer:
+
+    #!/bin/sh
+    BLOCK=128000
+    diskutil erasevolume HFS+ "ramdisk" `hdiutil attach -nomount ram://$BLOCKS`
+
+and here is a version for OS X.4 and previous:
 
     #!/bin/sh
     BLOCK=128000
@@ -919,6 +929,11 @@ command for managing ramdisks. Below are the links for the documentation
 of that command. 
 
 =over 4
+
+=item *
+
+Solaris 11:
+C<ramdiskadm(1M)> (L<http://docs.oracle.com/cd/E19963-01/html/821-1462/ramdiskadm-1m.html>)
 
 =item *
 
@@ -1044,8 +1059,9 @@ B<(W)> You gave to C<new()> an unknown attribute name.
 
 =head2 Similar modules
 
-C<CPAN::dependency> was more a experiment at a given time, and there are now
-more recent modules on the CPAN in the same field, but with more features:
+C<CPAN::dependency> was more a experiment at a given time (in 2005, for the
+CPAN Phalanx project), and there are now more recent modules on the CPAN in
+the same field, but with more features:
 
 L<CPAN::FindDependencies> - Find dependencies for modules on the CPAN
 

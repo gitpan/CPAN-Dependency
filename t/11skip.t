@@ -5,7 +5,7 @@ use Test::More;
 plan skip_all => "Test::Deep required for this test" unless eval "use Test::Deep; 1";
 
 my @bundles = qw(
-    Bundle::CPANPLUS  Bundle::Math  Bundle::Net::LDAP  Bundle::Phalanx100
+    Bundle::CPANPLUS  Bundle::Math  Bundle::Net::LDAP
 );
 my @core = qw(
     Carp  Class::Struct  Fcntl  File::Basename  File::Copy  File::Find
@@ -17,7 +17,6 @@ my %dists = (
     'Bundle::CPANPLUS' => 'Bundle-CPANPLUS', 
     'Bundle::Math' => 'Bundle-Math', 
     'Bundle::Net::LDAP' => 'Bundle-Net-LDAP', 
-    'Bundle::Phalanx100' => 'Bundle-Phalanx', 
 );
 map { $dists{$_} = 'perl' } @core;
 

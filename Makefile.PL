@@ -5,7 +5,7 @@ eval 'use ExtUtils::MakeMaker::Coverage';
 WriteMakefile(
     NAME                => 'CPAN::Dependency',
     LICENSE             => 'perl',
-    AUTHOR              => 'Sébastien Aperghis-Tramoni <sebastien@aperghis.net>',
+    AUTHOR              => 'Sebastien Aperghis-Tramoni <sebastien@aperghis.net>',
     VERSION_FROM        => 'lib/CPAN/Dependency.pm',
     ABSTRACT_FROM       => 'lib/CPAN/Dependency.pm',
     PREREQ_PM => {

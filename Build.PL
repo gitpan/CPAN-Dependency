@@ -4,7 +4,7 @@ use Module::Build;
 my $builder = Module::Build->new(
     module_name         => 'CPAN::Dependency',
     license             => 'perl',
-    dist_author         => 'Sébastien Aperghis-Tramoni <sebastien@aperghis.net>',
+    dist_author         => 'Sebastien Aperghis-Tramoni <sebastien@aperghis.net>',
     dist_version_from   => 'lib/CPAN/Dependency.pm',
     requires => {
         'CPANPLUS'      => '0.82',

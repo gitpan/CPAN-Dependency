@@ -1,5 +1,12 @@
 Revision history for CPAN-Dependency
 
+0.16    2012.09.14
+        [BUGFIX] CPAN-RT#47409: Handle new CPANTS schema.
+        [TESTS] Removed Bundle::Phalanx100 from t/11skip.t
+        [DOC] Highlight that this module is no longer that useful.
+        [DOC] Add instructions to create a ramdisk on OS X.5+
+        [DOC] Add links for Solaris 11's ramdiskadm(1M) manual page.
+
 0.15    2008.03.05
         [TESTS] Really fixing t/11skip.t
 
